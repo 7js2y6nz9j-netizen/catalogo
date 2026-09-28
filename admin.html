@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Panel del taller · Inluna</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#f4eee1">
+  <link rel="manifest" href="admin.webmanifest">
+  <link rel="icon" href="img/icono.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="img/icono-180.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Panel Inluna">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400..600&family=Klee+One:wght@400;600&display=swap">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/piezas.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body class="admin papel">
+
+  <!-- Cargando -->
+  <div id="cargando" class="cargando-admin" role="status" aria-label="Cargando"><span id="cargando-logo"></span></div>
+
+  <!-- 1 · Entrar -->
+  <section id="acceso" class="pantalla acceso" hidden>
+    <div class="acceso-caja">
+      <div class="acceso-logo" id="acceso-logo"></div>
+      <h1>Panel del taller</h1>
+      <p class="acceso-sub">Agrega, edita y ordena tus piezas desde aquí.</p>
+      <div class="nota-prueba" data-prueba hidden>
+        <strong>Modo de prueba.</strong> Aún no conectas tu hoja de Google (ver LEEME.md), así que lo que guardes
+        se queda solo en este navegador. Escribe cualquier clave para probar el panel.
+      </div>
+      <form id="form-acceso" class="form-acceso">
+        <input class="solo-lectores" type="text" name="username" autocomplete="username" value="taller" tabindex="-1" aria-hidden="true">
+        <label class="campo">
+          <span class="campo-etiqueta">Clave del panel</span>
+          <span class="campo-con-boton">
+            <input id="clave" name="password" type="password" autocomplete="current-password" enterkeyhint="go" required>
+            <button type="button" class="ver-clave" id="ver-clave" aria-label="Mostrar clave" data-icono="ojo"></button>
+          </span>
+        </label>
+        <button class="boton boton-tinta boton-ancho" type="submit" id="boton-entrar">Entrar</button>
+        <p class="form-error" id="error-acceso" role="alert" hidden></p>
+      </form>
+      <a class="enlace-suave" href="./">← Ver el catálogo</a>
+    </div>
+  </section>
+
+  <!-- 2 · Lista de piezas -->
+  <section id="lista" class="pantalla lista" hidden>
+    <header class="barra-admin">
+      <div class="barra-marca">
+        <span class="barra-logo" id="barra-logo"></span>
+        <div>
+          <p class="barra-titulo">Mis piezas</p>
+          <p class="barra-sub" id="cuenta"></p>
+        </div>
+      </div>
+      <div class="barra-acciones">
+        <a class="boton-icono" href="./" target="_blank" rel="noopener" aria-label="Ver catálogo" data-icono="ojo"></a>
+        <button class="boton-icono" type="button" id="abrir-ajustes" aria-label="Ajustes del catálogo" data-icono="ajustes"></button>
+        <button class="boton-icono" type="button" id="salir" aria-label="Salir del panel" data-icono="salir"></button>
+      </div>
+    </header>
+    <p class="banda-prueba" data-prueba hidden>Modo de prueba · lo que guardes se queda solo en este navegador</p>
+
+    <div class="herramientas">
+      <label class="buscador">
+        <span data-icono="buscar"></span>
+        <input type="search" id="buscar" placeholder="Buscar pieza o colección" autocomplete="off" enterkeyhint="search">
+      </label>
+      <div class="filtros" id="filtros">
+        <button class="filtro activo" type="button" data-filtro="todas">Todas</button>
+        <button class="filtro" type="button" data-filtro="disponible">Disponibles</button>
+        <button class="filtro" type="button" data-filtro="encargo">Sobre pedido</button>
+        <button class="filtro" type="button" data-filtro="agotado">Agotadas</button>
+        <button class="filtro" type="button" data-filtro="oculto">Ocultas</button>
+      </div>
+      <div class="herramientas-fila">
+        <p class="ayuda-lista" id="ayuda-lista">Toca una pieza para editarla.</p>
+        <button class="boton boton-plano boton-chico" type="button" id="ordenar"><span data-icono="ordenar"></span><span>Ordenar</span></button>
+      </div>
+    </div>
+
+    <ul class="lista-piezas" id="lista-piezas"></ul>
+    <div class="lista-vacia" id="lista-vacia" hidden></div>
+
+    <button class="fab" type="button" id="nueva"><span data-icono="mas"></span><span>Nueva pieza</span></button>
+    <div class="barra-orden" id="barra-orden" hidden>
+      <button class="boton boton-plano" type="button" id="cancelar-orden">Cancelar</button>
+      <button class="boton boton-tinta" type="button" id="guardar-orden">Guardar orden</button>
+    </div>
+  </section>
+
+  <!-- Editor de pieza -->
+  <dialog id="editor" class="hoja-admin" aria-labelledby="editor-titulo">
+    <form id="form-pieza" class="hoja-admin-caja" novalidate>
+      <header class="hoja-admin-cabeza">
+        <button type="button" class="boton-icono" data-cerrar aria-label="Cerrar" data-icono="cerrar"></button>
+        <h2 id="editor-titulo">Nueva pieza</h2>
+        <span class="hoja-admin-espacio"></span>
+      </header>
+      <div class="hoja-admin-cuerpo">
+        <section class="bloque">
+          <h3 class="bloque-titulo">Fotos <span>la primera es la portada</span></h3>
+          <div class="fotos-editor" id="fotos-editor"></div>
+          <input type="file" id="input-fotos" accept="image/*" multiple hidden>
+          <p class="campo-ayuda">✦ Cada foto se convierte sola al estilo del catálogo (tinta azul). La original se ve cuando alguien abre la pieza.</p>
+          <button type="button" class="enlace-suave" id="pegar-enlace">o pega el enlace de una imagen</button>
+        </section>
+
+        <section class="bloque vista-previa">
+          <h3 class="bloque-titulo">Así se verá en el catálogo</h3>
+          <div class="vp-fila">
+            <div class="vp-tarjeta"><span class="marco" id="vp-marco"></span><span class="vp-tipo" id="vp-tipo"></span></div>
+            <label class="campo">
+              <span class="campo-etiqueta">Animación</span>
+              <select name="animacion">
+                <option value="auto">Automática (según el nombre)</option>
+                <option value="vapor">Vapor · tazas y teteras</option>
+                <option value="colgar">Balanceo · láminas, bolsas, aretes</option>
+                <option value="girar">Girar · platos</option>
+                <option value="hojear">Hojear · libretas y libros</option>
+                <option value="brillo">Brillo · azulejos y joyería</option>
+                <option value="flores">Flores · jarrones y macetas</option>
+                <option value="llama">Llama · velas</option>
+                <option value="ninguna">Sin animación</option>
+              </select>
+              <span class="campo-ayuda">«Automática» la elige por el nombre: taza → vapor, bolsa → balanceo, plato → girar…</span>
+            </label>
+          </div>
+        </section>
+
+        <label class="campo">
+          <span class="campo-etiqueta">Nombre</span>
+          <input name="nombre" maxlength="90" placeholder="Ej. Taza Seigaiha" autocomplete="off" enterkeyhint="next">
+        </label>
+        <div class="fila-campos">
+          <label class="campo">
+            <span class="campo-etiqueta">Precio</span>
+            <input name="precio" inputmode="decimal" placeholder="Ej. 350" autocomplete="off" enterkeyhint="next">
+          </label>
+          <label class="campo">
+            <span class="campo-etiqueta">Colección</span>
+            <input name="categoria" list="lista-categorias" placeholder="Ej. Cerámica" autocomplete="off" enterkeyhint="next">
+          </label>
+        </div>
+        <datalist id="lista-categorias"></datalist>
+        <div class="chips-categorias" id="chips-categorias"></div>
+
+        <label class="campo">
+          <span class="campo-etiqueta">Descripción</span>
+          <textarea name="descripcion" rows="4" placeholder="Medidas, materiales, cuidados…"></textarea>
+        </label>
+
+        <fieldset class="campo">
+          <legend class="campo-etiqueta">Estado</legend>
+          <div class="segmentos">
+            <label><input type="radio" name="estado" value="disponible" checked><span>Disponible</span></label>
+            <label><input type="radio" name="estado" value="encargo"><span>Sobre pedido</span></label>
+            <label><input type="radio" name="estado" value="agotado"><span>Agotado</span></label>
+            <label><input type="radio" name="estado" value="oculto"><span>Oculto</span></label>
+          </div>
+          <p class="campo-ayuda">«Oculto» la guarda sin mostrarla en el catálogo.</p>
+        </fieldset>
+
+        <label class="interruptor">
+          <input type="checkbox" name="destacado">
+          <span class="interruptor-pista" aria-hidden="true"></span>
+          <span>Mostrar en «Favoritas del taller»</span>
+        </label>
+
+        <div class="zona-extra" id="zona-extra">
+          <button type="button" class="boton boton-plano" id="duplicar">Duplicar pieza</button>
+          <button type="button" class="boton boton-peligro" id="eliminar"><span data-icono="basura"></span><span>Eliminar</span></button>
+        </div>
+      </div>
+      <footer class="hoja-admin-pie">
+        <button type="submit" class="boton boton-tinta boton-ancho" id="guardar">Guardar pieza</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- Ajustes del catálogo -->
+  <dialog id="ajustes" class="hoja-admin" aria-labelledby="ajustes-titulo">
+    <form id="form-ajustes" class="hoja-admin-caja" novalidate>
+      <header class="hoja-admin-cabeza">
+        <button type="button" class="boton-icono" data-cerrar aria-label="Cerrar" data-icono="cerrar"></button>
+        <h2 id="ajustes-titulo">Ajustes</h2>
+        <span class="hoja-admin-espacio"></span>
+      </header>
+      <div class="hoja-admin-cuerpo">
+        <label class="campo">
+          <span class="campo-etiqueta">Nombre del taller</span>
+          <input name="nombre" maxlength="40" autocomplete="off">
+        </label>
+        <label class="campo">
+          <span class="campo-etiqueta">Texto pequeño antes del nombre</span>
+          <input name="antesDelNombre" maxlength="40" placeholder="el taller de" autocomplete="off">
+        </label>
+        <label class="campo">
+          <span class="campo-etiqueta">Frase de bienvenida</span>
+          <textarea name="lema" rows="2" maxlength="160"></textarea>
+        </label>
+        <label class="campo">
+          <span class="campo-etiqueta">WhatsApp</span>
+          <input name="whatsapp" type="tel" inputmode="tel" placeholder="Ej. 5215512345678" autocomplete="off">
+          <span class="campo-ayuda">Con código de país, sin «+» ni espacios. México: 52 + tus 10 dígitos.</span>
+        </label>
+        <label class="campo">
+          <span class="campo-etiqueta">Instagram</span>
+          <input name="instagram" placeholder="Ej. inluna.taller" autocomplete="off" autocapitalize="off" spellcheck="false">
+        </label>
+        <label class="campo">
+          <span class="campo-etiqueta">Moneda</span>
+          <select name="moneda">
+            <option value="MXN">Peso mexicano (MXN)</option>
+            <option value="USD">Dólar (USD)</option>
+            <option value="EUR">Euro (EUR)</option>
+            <option value="COP">Peso colombiano (COP)</option>
+            <option value="ARS">Peso argentino (ARS)</option>
+            <option value="CLP">Peso chileno (CLP)</option>
+            <option value="PEN">Sol peruano (PEN)</option>
+            <option value="GTQ">Quetzal (GTQ)</option>
+            <option value="CRC">Colón (CRC)</option>
+            <option value="UYU">Peso uruguayo (UYU)</option>
+            <option value="DOP">Peso dominicano (DOP)</option>
+            <option value="BOB">Boliviano (BOB)</option>
+          </select>
+        </label>
+        <label class="campo">
+          <span class="campo-etiqueta">Mensaje de WhatsApp</span>
+          <textarea name="mensajeWhatsApp" rows="3"></textarea>
+          <span class="campo-ayuda">Usa {pieza}, {precio} y {enlace}: se cambian solos por los datos de la pieza.</span>
+        </label>
+        <div class="zona-extra" data-prueba hidden>
+          <button type="button" class="boton boton-peligro" id="reiniciar-prueba">Borrar datos de prueba</button>
+        </div>
+      </div>
+      <footer class="hoja-admin-pie">
+        <button type="submit" class="boton boton-tinta boton-ancho" id="guardar-ajustes">Guardar ajustes</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- Confirmación -->
+  <dialog id="confirmar" class="confirmar">
+    <form method="dialog" class="confirmar-caja">
+      <p class="confirmar-texto" id="confirmar-texto"></p>
+      <div class="confirmar-botones">
+        <button class="boton boton-plano" value="no" id="confirmar-no">Cancelar</button>
+        <button class="boton boton-peligro" value="si" id="confirmar-si">Sí</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="avisos" class="avisos" aria-live="polite"></div>
+
+  <!-- Filtro de tinta para ver fotos antiguas sin su versión dibujada -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <filter id="tinta-foto" color-interpolation-filters="sRGB">
+      <feColorMatrix type="matrix" values="0.2126 0.7152 0.0722 0 0  0.2126 0.7152 0.0722 0 0  0.2126 0.7152 0.0722 0 0  0 0 0 1 0"/>
+      <feComponentTransfer><feFuncR type="discrete" tableValues="0 0.3 0.6 1"/><feFuncG type="discrete" tableValues="0 0.3 0.6 1"/><feFuncB type="discrete" tableValues="0 0.3 0.6 1"/></feComponentTransfer>
+      <feComponentTransfer><feFuncR type="table" tableValues="0.09 0.153 0.957"/><feFuncG type="table" tableValues="0.125 0.259 0.933"/><feFuncB type="table" tableValues="0.361 0.69 0.882"/></feComponentTransfer>
+    </filter>
+  </svg>
+
+  <script src="js/config.js"></script>
+  <script src="js/arte.js"></script>
+  <script src="js/demo.js"></script>
+  <script src="js/datos.js"></script>
+  <script src="js/animaciones.js"></script>
+  <script src="js/estilo.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

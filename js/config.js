@@ -1,0 +1,31 @@
+/* ==================================================================
+   CONFIGURACIÓN DEL CATÁLOGO · Inluna
+   ------------------------------------------------------------------
+   Este es el único archivo que necesitas editar para conectar tu
+   catálogo con tu hoja de Google (ver LEEME.md, paso 2).
+
+   Los textos, WhatsApp e Instagram también se pueden cambiar después
+   desde el panel (admin.html → Ajustes), sin tocar este archivo.
+   ================================================================== */
+window.INLUNA_CONFIG = {
+  // 1) URL de tu Apps Script (termina en /exec).
+  //    Mientras esté vacía, el catálogo muestra piezas de ejemplo y el
+  //    panel funciona en "modo de prueba" (solo guarda en ese teléfono).
+  urlScript: '',
+
+  // 2) Valores iniciales (el panel → Ajustes los puede sobrescribir)
+  nombre: 'Inluna',
+  antesDelNombre: 'el taller de',
+  lema: 'Piezas hechas a mano, dibujadas con tinta azul.',
+  whatsapp: '',   // código de país + número, sin "+" ni espacios. Ej: 5215512345678
+  instagram: '',  // tu usuario, sin "@". Ej: inluna.taller
+  moneda: 'MXN',  // MXN, USD, COP, ARS, CLP, PEN, EUR...
+  mensajeWhatsApp: '¡Hola! Me interesa {pieza} ({precio}) que vi en tu catálogo: {enlace}',
+
+  // 3) Colores de la tinta y del papel
+  colores: {
+    tinta: '#2742b0',   // azul cobalto
+    oscura: '#17205c',  // azul casi negro (contornos y textos)
+    papel: '#f4eee1',   // crema
+  },
+};

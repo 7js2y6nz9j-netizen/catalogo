@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Inluna · catálogo del taller</title>
+  <meta name="description" content="Entra al taller de Inluna y descubre piezas hechas a mano, dibujadas con tinta azul.">
+  <meta name="theme-color" content="#f4eee1">
+
+  <!-- Vista previa cuando compartes el enlace (WhatsApp, Facebook…).
+       Si cambias de dirección, actualiza estas dos líneas (ver LEEME.md, paso 3). -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://7js2y6nz9j-netizen.github.io/catalogo/">
+  <meta property="og:title" content="Inluna · catálogo del taller">
+  <meta property="og:description" content="Entra al taller y descubre las piezas hechas a mano.">
+  <meta property="og:image" content="https://7js2y6nz9j-netizen.github.io/catalogo/img/compartir.png">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="icon" href="img/icono.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="img/icono-180.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400..600&family=Klee+One:wght@400;600&display=swap">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/piezas.css">
+  <link rel="stylesheet" href="css/catalogo.css">
+</head>
+<body>
+  <!-- 1 · Cargador: los tres triángulos girando -->
+  <div id="cargador" class="cargador" role="status" aria-live="polite">
+    <div class="cargador-centro">
+      <svg class="logo logo-giro" viewBox="0 0 100 88" aria-hidden="true" focusable="false">
+        <g class="tri" style="transform-origin:26px 16.7px"><path class="tri-fondo" d="M4,4L48,4L26,42.1Z"/><path class="tri-banda" d="M37.8,4L48,4L26,42.1L20.9,33.3Z"/><path class="tri-borde" pathLength="1" d="M4,4L48,4L26,42.1Z"/></g>
+        <g class="tri" style="transform-origin:74px 16.7px"><path class="tri-fondo" d="M52,4L96,4L74,42.1Z"/><path class="tri-banda" d="M85.8,4L96,4L74,42.1L68.9,33.3Z"/><path class="tri-borde" pathLength="1" d="M52,4L96,4L74,42.1Z"/></g>
+        <g class="tri" style="transform-origin:50px 58px"><path class="tri-fondo" d="M28,45.3L72,45.3L50,83.4Z"/><path class="tri-banda" d="M61.8,45.3L72,45.3L50,83.4L44.9,74.6Z"/><path class="tri-borde" pathLength="1" d="M28,45.3L72,45.3L50,83.4Z"/></g>
+      </svg>
+      <p class="cargador-texto">abriendo el taller</p>
+    </div>
+  </div>
+
+  <!-- 2 · Entrada: la fachada interactiva (js/fachada.js) -->
+  <section id="entrada" class="entrada" aria-label="Entrada al taller" hidden></section>
+
+  <!-- 3 · Interior: la galería de arcos (js/taller.js) -->
+  <main id="taller" class="taller" hidden>
+    <div class="t-pared papel" aria-hidden="true"></div>
+    <div class="t-luna"></div>
+    <div class="t-friso" aria-hidden="true"></div>
+    <div class="t-enredaderas" aria-hidden="true"></div>
+    <div class="t-lamparas"></div>
+    <div class="t-contenido">
+      <header class="t-cabecera"></header>
+      <section class="galeria" aria-label="Colecciones del taller">
+        <div class="arcada" role="list" tabindex="0" aria-label="Desliza para ver las colecciones"></div>
+        <button class="galeria-flecha anterior" type="button" aria-label="Colección anterior"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <button class="galeria-flecha siguiente" type="button" aria-label="Colección siguiente"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+      </section>
+      <div class="galeria-pie">
+        <div class="puntos"></div>
+        <p class="galeria-pista">← desliza para recorrer el taller →</p>
+      </div>
+      <nav class="t-contacto" aria-label="Contacto"></nav>
+    </div>
+  </main>
+
+  <!-- Colección abierta, ficha de cada pieza y contacto -->
+  <section id="coleccion" class="coleccion papel" aria-labelledby="col-titulo" hidden></section>
+  <dialog id="ficha" class="ficha" aria-labelledby="ficha-nombre"></dialog>
+  <dialog id="contacto" class="dialogo-contacto" aria-label="Contacto y pedidos"></dialog>
+  <div id="avisos" class="avisos" aria-live="polite"></div>
+
+  <!-- Filtro de tinta para fotos que aún no tienen su versión dibujada -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <filter id="tinta-foto" color-interpolation-filters="sRGB">
+      <feColorMatrix type="matrix" values="0.2126 0.7152 0.0722 0 0  0.2126 0.7152 0.0722 0 0  0.2126 0.7152 0.0722 0 0  0 0 0 1 0"/>
+      <feComponentTransfer><feFuncR type="discrete" tableValues="0 0.3 0.6 1"/><feFuncG type="discrete" tableValues="0 0.3 0.6 1"/><feFuncB type="discrete" tableValues="0 0.3 0.6 1"/></feComponentTransfer>
+      <feComponentTransfer><feFuncR type="table" tableValues="0.09 0.153 0.957"/><feFuncG type="table" tableValues="0.125 0.259 0.933"/><feFuncB type="table" tableValues="0.361 0.69 0.882"/></feComponentTransfer>
+    </filter>
+  </svg>
+
+  <noscript><p style="position:relative;z-index:99;padding:24px;text-align:center">Para entrar al taller necesitas activar JavaScript.</p></noscript>
+
+  <script src="js/config.js"></script>
+  <script src="js/arte.js"></script>
+  <script src="js/escenas.js"></script>
+  <script src="js/sonido.js"></script>
+  <script src="js/demo.js"></script>
+  <script src="js/datos.js"></script>
+  <script src="js/nucleo.js"></script>
+  <script src="js/animaciones.js"></script>
+  <script src="js/fachada.js"></script>
+  <script src="js/taller.js"></script>
+  <script src="js/catalogo.js"></script>
+</body>
+</html>

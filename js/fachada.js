@@ -4,14 +4,14 @@
    · Mover el dedo / el mouse / inclinar el teléfono → profundidad
    · Las hojas caen del árbol; al tocarlo se sacude y caen más
    · Postigos que se abren y cierran, celosías de talavera que se
-     iluminan, arbolitos que se sacuden y el emblema que gira
+     iluminan, arbolitos que se sacuden y tu logo de hojas que gira
    · Las puertas se abren deslizando el dedo (o con un toque)
    · salir(): sales por la puerta, se cierra detrás de ti y quedas
      frente a la fachada, lista para volver a entrar cuando quieras
    ================================================================== */
 (function () {
   'use strict';
-  const I = window.Inluna, E = window.Escenas, S = window.Sonido;
+  const I = window.Inluna, E = window.Escenas, S = window.Sonido, A = window.Arte;
   const { $, $$, esc, espera, reducido } = I;
   const F = E.FACHADA;
 
@@ -35,7 +35,10 @@
         <button class="arbol capa" data-prof="0.4" type="button" aria-label="Sacudir el árbol">${E.arbol()}</button>
         <header class="entrada-titulo capa" data-prof="0.22">
           <p class="entrada-antes">${esc(antes)}</p>
-          <h1 class="entrada-nombre">${esc(nombre)}</h1>
+          <div class="entrada-nombre-fila">
+            <h1 class="entrada-nombre">${esc(nombre)}</h1>
+            <button class="titulo-logo" type="button" aria-label="Las hojas de Inluna">${A.logo({ clase: 'fz-logo' })}</button>
+          </div>
           <p class="entrada-pista2">✦ toca el árbol, las ventanas y las macetas ✦</p>
           <p class="nota-regreso" role="status" hidden></p>
         </header>
@@ -53,7 +56,6 @@
             </button>
             ${F.celosias.map((v, i) => `<button class="celosia" type="button" style="${E.caja(v)}" aria-label="Encender la celosía">${E.celosia(v.w, v.h, i)}</button>`).join('')}
             ${F.macetas.map((v, i) => `<button class="maceta" type="button" style="${E.caja(v)}" aria-label="Sacudir el arbolito">${E.topiario(i)}</button>`).join('')}
-            <button class="luna emblema" type="button" style="${E.caja(F.emblema)}" aria-label="Tocar el emblema de Inluna">${E.luna({ hojasClase: 'fz-logo' })}</button>
             ${fz.vivo}
           </div>
         </div>
@@ -194,9 +196,9 @@
       S.tintineo(2);
       I.vibrar(10);
     });
-    $('.luna', raiz).addEventListener('click', (e) => {
-      reiniciar(e.currentTarget, 'brilla');
-      I.destellosEn(e.currentTarget, { n: 10, radio: 60 });
+    $('.titulo-logo', raiz).addEventListener('click', (e) => {
+      reiniciar(e.currentTarget, 'gira');
+      I.destellosEn(e.currentTarget, { n: 8, radio: 46 });
       S.glissando();
       I.vibrar(8);
     });

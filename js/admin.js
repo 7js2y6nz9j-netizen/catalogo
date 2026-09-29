@@ -23,7 +23,7 @@
   /* ---------- colores e íconos ---------- */
   (function () {
     const c = (window.INLUNA_CONFIG || {}).colores || {}, st = document.documentElement.style;
-    ['tinta', 'oscura', 'papel', 'verde', 'acento', 'cafe', 'dorado', 'luna'].forEach((k) => {
+    ['tinta', 'oscura', 'papel', 'verde', 'acento', 'cafe', 'dorado'].forEach((k) => {
       if (c[k]) st.setProperty(`--${k}`, c[k]);
     });
   })();

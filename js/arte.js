@@ -11,7 +11,7 @@
   const CFG = window.INLUNA_CONFIG || {};
   const COL = Object.assign({
     tinta: '#2742b0', oscura: '#3a2a1f', papel: '#f4eee1',
-    verde: '#00aa1f', verdeClaro: '#8fcf7e', cafe: '#8b5a35', dorado: '#d99a2b', luna: '#e9decf',
+    verde: '#00aa1f', verdeClaro: '#8fcf7e', cafe: '#8b5a35', dorado: '#d99a2b',
   }, CFG.colores || {});
   const T = COL.tinta;       // azul talavera: solo azulejos, frisos, macetas y marcos
   const O = COL.oscura;      // tinta café: contornos
@@ -20,7 +20,6 @@
   const VC = COL.verdeClaro; // hojas claras
   const C = COL.cafe;        // ramas y techo
   const D = COL.dorado;      // estrellas y flores
-  const LU = COL.luna;       // la luna de Inluna
   const R3 = Math.sqrt(3);
   const f = (n) => Math.round(n * 10) / 10;
   const pt = (p) => `${f(p[0])},${f(p[1])}`;
@@ -100,24 +99,6 @@
   function logo({ clase = '', etiqueta = '' } = {}) {
     const a11y = etiqueta ? `role="img" aria-label="${etiqueta}"` : 'aria-hidden="true" focusable="false"';
     return `<svg class="logo ${clase}" viewBox="0 0 100 100" ${a11y}>${logoPartes()}</svg>`;
-  }
-
-  /* La luna de Inluna: media luna con tres patas (medidas de tu logo) */
-  const LUNA_CAJA = { x: 19, y: 46, w: 211, h: 195 };
-  const LUNA_LOGO = [
-    'M19,46A105.5,105.5 0 0 0 230,46H184.8A61,61 0 0 1 64.2,46Z',
-    'M26,99.3A112,112 0 0 0 66,141.5V207H26Z',
-    'M104,156.1A112,112 0 0 0 145,156.1V241H104Z',
-    'M183,141.5A112,112 0 0 0 223,99.3V207H183Z',
-  ];
-  function lunaPartes({ relleno = LU, contorno = '', grosor = 0 } = {}) {
-    const trazo = contorno ? ` stroke="${contorno}" stroke-width="${grosor}" stroke-linejoin="round"` : '';
-    return `<g class="luna-logo">${LUNA_LOGO.map((d) => `<path d="${d}" fill="${relleno}"${trazo}/>`).join('')}</g>`;
-  }
-  function lunaLogo({ clase = '', relleno, contorno, grosor, etiqueta = '' } = {}) {
-    const m = grosor ? grosor : 0, c = LUNA_CAJA;
-    const a11y = etiqueta ? `role="img" aria-label="${etiqueta}"` : 'aria-hidden="true" focusable="false"';
-    return `<svg class="luna-svg ${clase}" viewBox="${c.x - m} ${c.y - m} ${c.w + 2 * m} ${c.h + 2 * m}" ${a11y}>${lunaPartes({ relleno, contorno, grosor })}</svg>`;
   }
 
   /* ================================================================
@@ -636,8 +617,8 @@
   };
 
   window.Arte = {
-    colores: { T, O, P, V, VC, C, D, LU }, azar, aUri, filtroTinta, destello, hojaD,
-    logo, logoPartes, HOJAS_LOGO, lunaLogo, lunaPartes, LUNA_CAJA,
+    colores: { T, O, P, V, VC, C, D }, azar, aUri, filtroTinta, destello, hojaD,
+    logo, logoPartes, HOJAS_LOGO,
     PATRONES, NOMBRES_PATRONES, patron, rayado, OBJETOS, ilustracion, muestra, imagenDeDibujo,
     marcoArco, frisoTile, arquitosTile, enredadera, catmullRom, ICONOS, nuevoId,
     util: { f, pt, lerp },

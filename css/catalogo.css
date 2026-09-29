@@ -94,6 +94,16 @@ body { overflow-x: hidden; }
   margin: 0; font-family: var(--f-titulo); font-style: italic; font-weight: 500;
   font-size: clamp(44px, min(13vw, 9vh), 84px); line-height: 0.95; letter-spacing: -0.015em;
 }
+/* tu logo de hojas, a la derecha del nombre (al tocarlo, gira) */
+.entrada-nombre-fila { display: flex; align-items: center; gap: clamp(8px, 2.2vw, 16px); }
+.titulo-logo {
+  flex: none; width: clamp(38px, min(10.5vw, 7vh), 68px); aspect-ratio: 1; padding: 0; margin: 0;
+  border: 0; background: none; cursor: pointer; pointer-events: auto;
+}
+.titulo-logo svg { width: 100%; height: 100%; }
+.titulo-logo .hojas-logo { transform-box: view-box; transform-origin: 50% 50%; }
+.titulo-logo.gira .hojas-logo { animation: hojas-toque 1s cubic-bezier(0.2, 0.8, 0.3, 1); }
+.titulo-logo:focus-visible { outline: 3px solid var(--acento); outline-offset: 3px; border-radius: 50%; }
 .entrada-pista2 { margin: 10px 0 0 3px; max-width: 15em; font-family: var(--f-mano); font-size: 13px; color: var(--oscura); opacity: 0; transition: opacity 0.6s ease 1.8s; }
 .entrada.viva .entrada-pista2 { opacity: 0.75; }
 .nota-regreso {
@@ -184,13 +194,13 @@ body { overflow-x: hidden; }
   .entrada:not(.abriendo):not(.arrastrando) .puertas-boton:hover .hoja-puerta.der { transform: rotateY(-16deg); }
 }
 
-/* postigos, celosías, arbolitos y el emblema: todo se puede tocar */
-.postigo, .celosia, .maceta, .emblema {
+/* postigos, celosías y arbolitos: todo se puede tocar */
+.postigo, .celosia, .maceta {
   position: absolute; z-index: 3; padding: 0; margin: 0; border: 0; background: none; cursor: pointer;
   opacity: 0; transition: opacity 0.7s ease;
 }
-.entrada.lista .postigo, .entrada.lista .celosia, .entrada.lista .maceta, .entrada.lista .emblema { opacity: 1; }
-.postigo:focus-visible, .celosia:focus-visible, .maceta:focus-visible, .emblema:focus-visible { outline: 3px solid var(--acento); outline-offset: 3px; border-radius: 8px; }
+.entrada.lista .postigo, .entrada.lista .celosia, .entrada.lista .maceta { opacity: 1; }
+.postigo:focus-visible, .celosia:focus-visible, .maceta:focus-visible { outline: 3px solid var(--acento); outline-offset: 3px; border-radius: 8px; }
 .postigo { perspective: 240px; }
 .postigo-hoja { position: absolute; top: 0; bottom: 0; width: 50%; transition: transform 0.75s cubic-bezier(0.3, 1.2, 0.4, 1); }
 .postigo-hoja svg { width: 100%; height: 100%; }
@@ -206,21 +216,9 @@ body { overflow-x: hidden; }
 .maceta.sacude .topiario-copa { animation: sacudir-topiario 0.8s ease; }
 @keyframes topiario-brisa { from { transform: rotate(-1.5deg); } to { transform: rotate(1.5deg); } }
 @keyframes sacudir-topiario { 20% { transform: rotate(9deg); } 45% { transform: rotate(-7deg); } 70% { transform: rotate(3deg); } 100% { transform: rotate(0deg); } }
-.emblema svg { width: 100%; height: 100%; overflow: visible; }
-.luna .luna-halo { transform-box: fill-box; transform-origin: center; opacity: 0.4; }
-/* las hojas de Inluna giran despacio detrás de la luna; al tocarla dan un giro */
-.luna .luna-hojas, .luna .luna-hojas-toque { transform-box: view-box; transform-origin: 50% 50%; }
-.luna .luna-hojas { animation: hojas-giran 48s linear infinite; }
-.luna .luna-frente { transform-box: fill-box; transform-origin: 50% 60%; }
-.luna.brilla svg { animation: luna-brilla 0.9s ease; }
-.luna.brilla .luna-hojas-toque { animation: hojas-toque 1s cubic-bezier(0.2, 0.8, 0.3, 1); }
-.luna.brilla .luna-frente { animation: luna-frente 0.9s ease; }
-.luna.brilla .luna-halo { animation: luna-halo 0.9s ease; }
+/* (los logos de hojas del interior y del contacto usan estas) */
 @keyframes hojas-giran { to { transform: rotate(360deg); } }
 @keyframes hojas-toque { from { transform: rotate(0deg); } to { transform: rotate(120deg); } }
-@keyframes luna-frente { 35% { transform: scale(1.12); filter: drop-shadow(0 0 6px #fff3c8); } }
-@keyframes luna-brilla { 35% { transform: scale(1.12) rotate(-4deg); } }
-@keyframes luna-halo { 35% { opacity: 1; transform: scale(1.25); } }
 /* (el farol del interior usa estas) */
 @keyframes farol-quieto { from { transform: rotate(-2deg); } to { transform: rotate(2deg); } }
 @keyframes farol-mece { 12% { transform: rotate(22deg); } 32% { transform: rotate(-15deg); } 52% { transform: rotate(9deg); } 74% { transform: rotate(-4deg); } 100% { transform: rotate(0); } }
@@ -530,7 +528,7 @@ body { overflow-x: hidden; }
 }
 
 /* ------------------------------------------------------------------
-   6. CONTACTO · noche con luna, olas y azulejos
+   6. CONTACTO · panel verde con las hojas, olas y azulejos
    ------------------------------------------------------------------ */
 .contacto { position: relative; margin-top: 46px; }
 .contacto-noche {
@@ -598,5 +596,5 @@ body { overflow-x: hidden; }
 
 @media (prefers-reduced-motion: reduce) {
   .tarjeta-flota, .tarjeta-sombra, .nicho-marco, .nicho-sombra, .farol, .t-lampara, .chispa, .hueco-marco,
-  .luna svg, .luna-hojas, .hojas-fondo, .contacto-hojas, .hoja-cae, .arbol-copa, .tira, .topiario-copa, .contacto-olas, [class*='anim-'] img, .anim-capa, .anim-capa * { animation: none !important; }
+  .hojas-fondo, .contacto-hojas, .hoja-cae, .arbol-copa, .tira, .topiario-copa, .contacto-olas, [class*='anim-'] img, .anim-capa, .anim-capa * { animation: none !important; }
 }

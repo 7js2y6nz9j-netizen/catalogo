@@ -20,7 +20,7 @@
   /* ---------- colores de config.js → variables CSS ---------- */
   (function () {
     const c = CFG.colores || {}, st = document.documentElement.style;
-    ['tinta', 'oscura', 'papel', 'verde', 'acento', 'cafe', 'dorado', 'luna'].forEach((k) => {
+    ['tinta', 'oscura', 'papel', 'verde', 'acento', 'cafe', 'dorado'].forEach((k) => {
       if (c[k]) st.setProperty(`--${k}`, c[k]);
     });
     const destello = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="${A.destello(10, 10, 9.5, 0.16)}"/></svg>`;

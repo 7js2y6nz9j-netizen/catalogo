@@ -15,7 +15,6 @@
   --acento-hover: #1a9444;
   --cafe: #8b5a35;           /* ramas y techo */
   --dorado: #d99a2b;         /* estrellas y brillos */
-  --luna: #e9decf;           /* la luna de Inluna */
   --acento-suave: rgba(22, 128, 58, 0.1);
   --linea: rgba(58, 42, 31, 0.18);
   --sombra: 0 14px 28px -16px rgba(58, 42, 31, 0.45);
@@ -65,7 +64,6 @@ a { color: inherit; }
 /* ---------- Logo: las seis hojas (color por CSS para que siga a config.js) ---------- */
 .logo { overflow: visible; }
 .logo .hoja-logo { fill: var(--verde); }
-.luna-svg { overflow: visible; }
 
 /* ---------- Botones ---------- */
 .boton {

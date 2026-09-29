@@ -10,9 +10,9 @@
 
 Tu catálogo en línea, con tu arte:
 
-1. **Carga:** las seis hojas verdes de tu logo se abren una a una, giran y luego vuelan al emblema de la casita.
+1. **Carga:** las seis hojas verdes de tu logo se abren una a una, giran y luego vuelan a su lugar, a la derecha del nombre «Inluna».
 2. **Entrada (la fachada):** una casita de ladrillo blanco con la enredadera cayendo desde el techo, un árbol que deja caer sus hojas y sombras de hojas en la pared. La clienta **desliza o toca las puertas** (verdes) para entrar. Antes puede jugar:
-   - el **árbol** se sacude y suelta hojas; los **postigos** de la ventana se abren y cierran; las **celosías de talavera** se iluminan; los **arbolitos** en maceta se sacuden; tu **emblema** (las hojas con la luna de Inluna) gira;
+   - el **árbol** se sacude y suelta hojas; los **postigos** de la ventana se abren y cierran; las **celosías de talavera** se iluminan; los **arbolitos** en maceta se sacuden; tu **logo de hojas**, junto al nombre, gira al tocarlo;
    - todo se mueve un poco al inclinar el teléfono;
    - sonido opcional (apagado al inicio; botón **sin sonido / sonido** arriba a la derecha).
    - **La fachada es siempre el inicio:** dentro del taller hay un botón **salir** (arriba a la izquierda) y el botón **atrás** del teléfono también saca por la puerta. Se sale caminando hacia atrás por la puerta, que se cierra, y se puede volver a entrar cuando se quiera.
@@ -158,12 +158,12 @@ Abre **`https://TU-USUARIO.github.io/catalogo/admin.html`** y entra con tu clave
 
 ## 6 · Personalizar
 
-- **Colores:** `js/config.js` → `colores` (verde de las hojas y botones, café para la tinta, ramas y techo, azul solo para la talavera, dorado para estrellas y flores, y el crema de la luna).
+- **Colores:** `js/config.js` → `colores` (verde de las hojas y botones, café para la tinta, ramas y techo, azul solo para la talavera y dorado para estrellas y flores).
 - **Textos de la entrada** ("el taller de", nombre, frase): panel → Ajustes.
 - **Tipografías:** Fraunces (títulos) y Klee One (letra a mano), de Google Fonts. Se cambian en `index.html`, `admin.html` y en `css/base.css` (`--f-titulo`, `--f-mano`).
 - **Dibujos:** todo el arte se genera con código, sin imágenes pesadas:
   - `js/arte.js` → logo, patrones (escamas, olas, puntos, ajedrez, arcos, ramitas, estrellas…), marcos de arco, friso y enredaderas.
-  - `js/escenas.js` → la casita de la entrada (ladrillo blanco, enredadera, árbol, puerta verde, postigos, celosías de talavera, arbolitos y tu emblema) y las piezas del interior.
+  - `js/escenas.js` → la casita de la entrada (ladrillo blanco, enredadera, árbol, puerta verde, postigos, celosías de talavera y arbolitos) y las piezas del interior.
 - **Animaciones de las piezas:** las palabras que activan cada una están en `js/animaciones.js`; cómo se mueven, en `css/piezas.css`.
 - **Estilo de las fotos dibujadas:** `js/estilo.js` (grosor de las líneas, cantidad de tinta).
 - **Piezas de ejemplo:** `js/demo.js` (solo se ven mientras no conectes tu hoja).
@@ -202,7 +202,7 @@ catalogo-inluna/
 ├── js/
 │   ├── config.js         ← ★ lo único que necesitas editar
 │   ├── arte.js           ← logo, patrones, arcos, friso, enredaderas
-│   ├── escenas.js        ← fachada, puertas, luna, piezas del interior
+│   ├── escenas.js        ← la casita de la entrada y las piezas del interior
 │   ├── animaciones.js    ← qué animación lleva cada pieza
 │   ├── estilo.js         ← convierte tus fotos al dibujo en tinta azul
 │   ├── sonido.js         ← campanitas (opcionales)

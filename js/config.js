@@ -30,7 +30,6 @@ window.INLUNA_CONFIG = {
     oscura: '#3a2a1f',  // tinta café (contornos y textos)
     tinta: '#2742b0',   // azul talavera (azulejos, frisos, macetas y marcos)
     dorado: '#d99a2b',  // estrellas y flores
-    luna: '#e9decf',    // la luna de Inluna
     papel: '#f4eee1',   // crema
   },
 };

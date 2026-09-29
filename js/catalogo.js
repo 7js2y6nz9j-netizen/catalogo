@@ -1,6 +1,6 @@
 /* ==================================================================
    catalogo.js · Arranque del catálogo y navegación
-   Cargador (logo girando) → el logo vuela al emblema → fachada
+   Cargador (logo girando) → el logo vuela junto al nombre → fachada
    interactiva → galería de arcos → colección → pieza.
    La fachada es siempre el inicio: se entra por la puerta y se sale
    por ella (con "atrás", con el botón «salir» o al volver de mandar

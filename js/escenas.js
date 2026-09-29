@@ -5,7 +5,7 @@
    blanco con la enredadera cayendo desde el techo, un árbol que deja
    caer sus hojas y sombras de hojas sobre la pared. Puerta verde,
    ventana con postigos, celosías de talavera (el azul queda solo ahí y
-   en las macetas), arbolitos en maceta y tu emblema: hojas con luna.
+   en las macetas) y arbolitos en maceta.
    ================================================================== */
 (function () {
   'use strict';
@@ -31,7 +31,6 @@
     W, H, CX, SUELO,
     muro: { x: 70, y: 116, w: 260, h: SUELO - 116 },
     puerta: { x: 162, y: 318, w: 76, h: 150 },
-    emblema: { x: 163, y: 168, w: 74, h: 74 },
     postigo: { x: 102, y: 176, w: 48, h: 64 },
     celosias: [{ x: 250, y: 176, w: 48, h: 64 }, { x: 84, y: 352, w: 42, h: 42 }, { x: 274, y: 352, w: 42, h: 42 }],
     macetas: [{ x: 122, y: 386, w: 32, h: 82 }, { x: 246, y: 386, w: 32, h: 82 }],
@@ -76,7 +75,7 @@
       if (x > 74 && x < 346) sombras += sombraHoja(x - 6, y + 16, giro, esc);
     }
     // tiras que cuelgan: [x, hasta dónde bajan]
-    [[58, 172], [86, 204], [112, 236], [144, 210], [178, 158], [222, 158], [258, 204], [292, 222], [322, 196], [348, 176]].forEach(([x0, fin], i) => {
+    [[58, 172], [86, 204], [112, 236], [144, 210], [178, 196], [222, 188], [258, 204], [292, 222], [322, 196], [348, 176]].forEach(([x0, fin], i) => {
       const n = Math.max(3, Math.round((fin - 116) / 10));
       const pts = [];
       for (let j = 0; j <= n; j++) { const t = j / n; pts.push([x0 + Math.sin(t * 2.6 + i * 1.7) * 6 * t, 116 + (fin - 116) * t]); }
@@ -278,55 +277,9 @@
     return `<svg viewBox="-7 -7.5 14 17" aria-hidden="true" focusable="false"><path d="${HOJA}" fill="${color}"/><path d="${VENA}" stroke="rgba(255,255,255,.45)" stroke-width=".7"/></svg>`;
   }
 
-  /* El emblema: las seis hojas de Inluna con su luna al frente */
-  function luna({ hojasClase = '' } = {}) {
-    const c = 70, lado = 132, k = 0.34;
-    const L = A.LUNA_CAJA, lw = L.w * k, lh = L.h * k;
-    return `<svg viewBox="0 0 140 140" aria-hidden="true" focusable="false" overflow="visible">` +
-      `<defs><radialGradient id="halo-luna"><stop offset="0" stop-color="#fff7da" stop-opacity=".95"/><stop offset=".5" stop-color="#fff7da" stop-opacity=".4"/><stop offset="1" stop-color="#fff7da" stop-opacity="0"/></radialGradient></defs>` +
-      `<circle class="luna-halo" cx="${c}" cy="${c}" r="70" fill="url(#halo-luna)"/>` +
-      `<g class="luna-hojas ${hojasClase}"><g class="luna-hojas-toque"><g transform="translate(${c - lado / 2},${c - lado / 2}) scale(${lado / 100})">${A.logoPartes()}</g></g></g>` +
-      `<g class="luna-frente"><g transform="translate(${f(c - lw / 2)},${f(c - lh / 2 + 2)}) scale(${k}) translate(${-L.x},${-L.y})">${A.lunaPartes({ contorno: O, grosor: 2.2 / k })}</g></g>` +
-      `</svg>`;
-  }
-
   /* ================================================================
      INTERIOR · piezas sueltas para la galería
      ================================================================ */
-  function ventanaLuna(R) {
-    const id = A.nuevoId('vl');
-    const Ri = R - 10;
-    let dentro = `<rect x="${-R}" y="${-R}" width="${2 * R}" height="${2 * R}" fill="${T}"/>`;
-    let d = '';
-    for (let x = -R * 2; x < R * 2; x += 7) d += `M${f(x)},${-R}L${f(x + R)},${R}`;
-    dentro += `<path d="${d}" stroke="${O}" stroke-width="1.2" opacity=".2"/>`;
-    const mr = Ri * 0.3, my = -Ri * 0.18;
-    dentro += `<g transform="translate(0,${f(my)}) rotate(90)">` +
-      `<circle r="${f(mr)}" fill="none" stroke="${P}" stroke-width="1.3" stroke-dasharray="2 6" opacity=".55"/>` +
-      `<path d="M0,${f(-mr)}A${f(mr)},${f(mr)} 0 0 1 0,${f(mr)}A${f(mr * 0.56)},${f(mr)} 0 0 0 0,${f(-mr)}Z" fill="${P}"/></g>`;
-    [[-0.52, -0.34, 0.1], [0.52, -0.34, 0.1], [-0.2, -0.66, 0.055], [0.2, -0.66, 0.055], [-0.66, 0.06, 0.05], [0.66, 0.06, 0.05], [-0.3, 0.22, 0.04], [0.3, 0.22, 0.04]].forEach(([x, y, k]) => {
-      dentro += `<path d="${A.destello(x * Ri, y * Ri, k * Ri * 1.3, 0.18)}" fill="${P}"/>`;
-    });
-    dentro += `<path d="M${-R},${f(Ri * 0.5)}H${R}V${R}H${-R}Z" fill="${O}" opacity=".25"/>`;
-    for (let fila = 0; fila < 4; fila++) {
-      const y = Ri * (0.48 + fila * 0.14);
-      let dd = `M${f(-Ri - 20)},${f(y)}`;
-      for (let x = -Ri - 20; x < Ri + 20; x += Ri * 0.25) dd += `q${f(Ri * 0.0625)},${f(-Ri * 0.07)} ${f(Ri * 0.125)},0t${f(Ri * 0.125)},0`;
-      dentro += `<path d="${dd}" stroke="${P}" stroke-width="1.8" fill="none" opacity="${f(0.95 - fila * 0.2)}"/>`;
-    }
-    return `<defs><clipPath id="${id}"><circle r="${Ri}"/></clipPath></defs>` +
-      `<circle r="${R + 6}" fill="${P}" stroke="${O}" stroke-width="3"/>` +
-      `<path d="M0,${-(R + 6)}A${R + 6},${R + 6} 0 0 1 0,${R + 6}L0,${Ri}A${Ri},${Ri} 0 0 0 0,${-Ri}Z" fill="${T}"/>` +
-      `<g clip-path="url(#${id})">${dentro}</g>` +
-      `<circle r="${Ri}" fill="none" stroke="${O}" stroke-width="2.4"/>` +
-      `<circle r="${R + 6}" fill="none" stroke="${O}" stroke-width="3"/>`;
-  }
-  function ventanaLunaSVG(R = 150) {
-    const m = R + 10;
-    return `<svg viewBox="${-m} ${-m} ${2 * m} ${2 * m}" aria-hidden="true" focusable="false">` +
-      `<defs>${A.filtroTinta('tinta-luna', { escala: 2.2, frecuencia: 0.03, semilla: 5 })}</defs><g filter="url(#tinta-luna)">${ventanaLuna(R)}</g></svg>`;
-  }
-
   /* El círculo de fondo del interior: el logo de hojas de Inluna, grande */
   function hojasFondoSVG() {
     return `<svg viewBox="-4 -4 108 108" aria-hidden="true" focusable="false"><g class="hojas-fondo">${A.logoPartes()}</g></svg>`;
@@ -365,7 +318,7 @@
   }
 
   window.Escenas = {
-    FACHADA, VERDES, caja, fachada, hojaPuerta, huecoPuerta, postigoPanel, celosia, topiario, arbol, hojaSuelta, luna,
-    ventanaLuna, ventanaLunaSVG, hojasFondoSVG, lampara, pilar, enredaderaColgante, escapar,
+    FACHADA, VERDES, caja, fachada, hojaPuerta, huecoPuerta, postigoPanel, celosia, topiario, arbol, hojaSuelta,
+    hojasFondoSVG, lampara, pilar, enredaderaColgante, escapar,
   };
 })();

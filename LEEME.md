@@ -1,5 +1,12 @@
 # Catálogo digital · Inluna
 
+> **Ya está en línea y conectado a tu hoja de Google:**
+> - Catálogo (para Instagram): **https://7js2y6nz9j-netizen.github.io/catalogo/**
+> - Tu panel (entra con tu clave): **https://7js2y6nz9j-netizen.github.io/catalogo/admin.html**
+> - Tus piezas se guardan en la hoja **"Catálogo Inluna"** de tu Google Drive y las fotos en la carpeta **"Inluna · fotos del catálogo"**.
+>
+> Los pasos 1 a 3 de abajo ya están hechos; quedan como referencia por si algún día hay que repetirlos.
+
 Tu catálogo en línea, con tu arte:
 
 1. **Carga:** los tres triángulos del logo giran y luego vuelan a su lugar en el frontón del taller.

@@ -343,3 +343,25 @@ body.admin { min-height: 100svh; }
 }
 @keyframes gama-tira-abre { from { transform: rotate(0deg); opacity: 0; } 25% { opacity: 1; } }
 .gama-tira-nombre { font-family: var(--f-mano); font-size: 13px; fill: var(--oscura); text-anchor: middle; }
+
+/* ---------- Detalles para pedir (medidas, entrega, mínimo, variantes) ---------- */
+.bloque-detalles { border: 1.5px solid var(--oscura); border-radius: 16px; background: var(--papel-3); overflow: hidden; }
+.bloque-detalles summary {
+  display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 10px; padding: 12px 14px;
+  cursor: pointer; list-style: none;
+}
+.bloque-detalles summary::-webkit-details-marker { display: none; }
+.bloque-detalles summary::after { content: '›'; grid-column: 2; grid-row: 1 / span 2; font-size: 24px; line-height: 1; transition: transform 0.2s ease; }
+.bloque-detalles[open] summary::after { transform: rotate(90deg); }
+.bloque-detalles summary:focus-visible { outline: 3px solid var(--acento); outline-offset: -3px; border-radius: 14px; }
+.detalles-titulo { font-weight: 700; font-size: 14.5px; }
+.detalles-resumen { grid-column: 1; font-family: var(--f-mano); font-size: 13.5px; color: var(--acento); }
+.detalles-cuerpo { display: grid; gap: 14px; padding: 4px 14px 16px; border-top: 1.5px dashed var(--linea); padding-top: 14px; }
+.detalles-ayuda { margin-top: 2px; }
+
+/* ---------- Ajustes · Sobre el taller ---------- */
+.bloque-sobre { gap: 14px; padding-top: 14px; border-top: 1.5px dashed var(--linea); }
+.sobre-foto-editor { display: flex; align-items: center; gap: 14px; }
+.sobre-foto-vista { flex: none; width: 96px; }
+.sobre-foto-vista .sin-foto .logo { width: 46%; }
+.sobre-foto-botones { display: grid; justify-items: start; gap: 4px; }

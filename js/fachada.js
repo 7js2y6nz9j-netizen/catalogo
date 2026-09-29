@@ -5,9 +5,12 @@
    · Las hojas caen del árbol; al tocarlo se sacude y caen más
    · Postigos que se abren y cierran, celosías de talavera que se
      iluminan, arbolitos que se sacuden y tu logo de hojas que gira
-   · Las puertas se abren deslizando el dedo (o con un toque)
+   · Las puertas se abren deslizando el dedo, con un toque o con el
+     botón «Entrar al taller»
    · salir(): sales por la puerta, se cierra detrás de ti y quedas
      frente a la fachada, lista para volver a entrar cuando quieras
+   · En modo ligero (teléfonos modestos) la fachada queda quieta: sin
+     profundidad continua y con pocas hojas cayendo
    ================================================================== */
 (function () {
   'use strict';
@@ -15,18 +18,20 @@
   const { $, $$, esc, espera, reducido } = I;
   const F = E.FACHADA;
 
-  let raiz = null, escena = null, capas = [], rafId = 0, activo = false, entrando = false, alEntrar = null;
+  let raiz = null, escena = null, capas = [], rafId = 0, activo = false, entrando = false, alEntrar = null, preparar = null;
   const vista = { tx: 0, ty: 0, x: 0, y: 0, ultimo: -1e9, tilt: null, tilt0: null };
   let arrastre = null, tocando = null, tNota = 0;
 
   const iconoPuerta = '<svg class="pista-icono" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7L4 12l5 5M15 7l5 5-5 5"/></svg>';
+  const flecha = '<svg class="icono" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg>';
 
-  function construir({ nombre, antes, onEntrar }) {
+  function construir({ nombre, antes, onEntrar, preparar: prep }) {
     if (raiz) destruir();
     alEntrar = onEntrar;
+    preparar = prep || null;
     entrando = false;
     raiz = $('#entrada');
-    raiz.className = 'entrada';
+    raiz.className = I.ligero.activo ? 'entrada crecida' : 'entrada';
     raiz.removeAttribute('style');
     const fz = E.fachada({ nombre });
     const hoja = E.hojaPuerta(), postigo = E.postigoPanel();
@@ -60,7 +65,9 @@
           </div>
         </div>
         <div class="entrada-pistas">
-          <p class="entrada-pista">${iconoPuerta}<span>desliza o toca las puertas para entrar</span></p>
+          <button class="boton boton-tinta boton-entrar" type="button" data-entrar><span>Entrar al taller</span>${flecha}</button>
+          <p class="entrada-pista">${iconoPuerta}<span>o desliza las puertas</span></p>
+          <p class="entrada-espera" role="status">abriendo el taller…</p>
         </div>
         <div class="hojas-caen" aria-hidden="true"></div>
       </div>`;
@@ -111,7 +118,7 @@
   function crearHojas() {
     if (reducido) return;
     const cont = $('.hojas-caen', raiz);
-    const n = window.innerWidth < 600 ? 9 : 14;
+    const n = I.ligero.activo ? 3 : window.innerWidth < 600 ? 9 : 14;
     for (let i = 0; i < n; i++) {
       const dur = 9 + Math.random() * 7;
       cont.appendChild(hojaQueCae(`left:${(38 + Math.random() * 60).toFixed(1)}vw;top:${(2 + Math.random() * 22).toFixed(1)}vh;` +
@@ -174,6 +181,7 @@
     return e && e.clientX ? [e.clientX, e.clientY] : [r.left + r.width / 2, r.top + r.height / 2];
   }
   function conectar() {
+    $('[data-entrar]', raiz).addEventListener('click', () => { I.vibrar(10); entrar(); });
     raiz.addEventListener('pointermove', (e) => moverVista(e.clientX, e.clientY), { passive: true });
     raiz.addEventListener('pointerdown', (e) => {
       moverVista(e.clientX, e.clientY);
@@ -224,14 +232,30 @@
   }
 
   /* ---------- ciclo de vida ---------- */
+  const conProfundidad = () => !reducido && !I.ligero.activo;
   function animar() {
     if (!raiz) return;
     raiz.classList.add('viva');
     activo = true;
     cancelAnimationFrame(rafId);
-    if (!reducido) rafId = requestAnimationFrame(bucle);
+    if (conProfundidad()) rafId = requestAnimationFrame(bucle);
     setTimeout(() => { if (!entrando && raiz) raiz.classList.add('llamar'); }, reducido ? 0 : 1600);
   }
+  // si el teléfono resulta modesto: la fachada se queda quieta y con pocas hojas
+  I.alPasarALigero(() => {
+    cancelAnimationFrame(rafId);
+    rafId = 0;
+    if (!raiz) return;
+    raiz.classList.add('crecida');
+    capas.forEach((c) => { c.el.style.transform = ''; });
+    $$('.hoja-cae:not(.rafaga)', raiz).slice(3).forEach((h) => h.remove());
+  });
+  // con la pestaña escondida no se anima nada
+  document.addEventListener('visibilitychange', () => {
+    if (!raiz || !activo) return;
+    cancelAnimationFrame(rafId);
+    rafId = document.visibilityState === 'visible' && conProfundidad() ? requestAnimationFrame(bucle) : 0;
+  });
 
   // Zoom sobre el umbral de la puerta (para entrar o para salir)
   function zoomPuerta() {
@@ -249,6 +273,23 @@
     raiz.classList.remove('llamar');
     raiz.classList.add('abriendo');
     ponerApertura(1);
+    // si las piezas aún no llegan, la puerta espera abierta un momento
+    const listo = preparar && preparar();
+    if (listo && listo.then) {
+      const aviso = setTimeout(() => { if (raiz) raiz.classList.add('esperando'); }, 200);
+      try {
+        await listo;
+      } catch (e) {
+        clearTimeout(aviso);
+        if (raiz) { raiz.classList.remove('esperando', 'abriendo'); ponerApertura(0); }
+        entrando = false;
+        I.aviso('No pude abrir el taller: revisa tu conexión e inténtalo otra vez.', 'error');
+        return;
+      }
+      clearTimeout(aviso);
+      if (!raiz) return;
+      raiz.classList.remove('esperando');
+    }
     if (reducido) {
       alEntrar && alEntrar();
       raiz.classList.add('desvanecer');
@@ -270,8 +311,8 @@
   /* Salir del taller: empiezas en el umbral, te alejas de la puerta y
      ésta se cierra detrás de ti. alCubrir() guarda el interior cuando
      la fachada ya lo tapa. */
-  async function salir({ nombre, antes, onEntrar, gracias = false, alCubrir } = {}) {
-    construir({ nombre, antes, onEntrar });
+  async function salir({ nombre, antes, onEntrar, preparar: prep, gracias = false, alCubrir } = {}) {
+    construir({ nombre, antes, onEntrar, preparar: prep });
     raiz.classList.add('lista', 'crecida', 'saliendo');
     const logo = $('.fz-logo', raiz);
     if (logo) logo.classList.add('visible');
@@ -316,8 +357,8 @@
       : '¡Vuelve cuando quieras! <span>✦</span> La puerta siempre está abierta.';
     n.classList.remove('se-va');
     n.hidden = false;
-    const p = $('.entrada-pista span', raiz);
-    if (p) p.textContent = 'toca las puertas para volver a entrar';
+    const b = $('[data-entrar] span', raiz);
+    if (b) b.textContent = 'Volver a entrar';
     clearTimeout(tNota);
     tNota = setTimeout(() => { if (n.isConnected) n.classList.add('se-va'); }, 7000);
   }

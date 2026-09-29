@@ -22,6 +22,12 @@ window.INLUNA_CONFIG = {
   moneda: 'MXN',  // MXN, USD, COP, ARS, CLP, PEN, EUR...
   mensajeWhatsApp: '¡Hola! Me interesa {pieza} ({precio}) que vi en tu catálogo: {enlace}',
 
+  // «Sobre el taller» (también se cambia desde el panel → Ajustes)
+  sobreQuien: '',   // quién está detrás del taller (vacío = un texto general)
+  sobreProceso: 'Me cuentas tu idea o eliges una pieza del catálogo\nTe comparto el diseño y la cotización\nLa hacemos en el taller, con cuidado\nTe la entrego o te la envío',
+  sobreMateriales: 'Grabado y corte láser, Impresión 3D, Textil, Diseño gráfico',
+  sobreFoto: '',    // una foto tuya o del taller (la sube el panel)
+
   // 3) Colores (el azul queda solo para la talavera)
   colores: {
     verde: '#00aa1f',   // hojas y logo de Inluna

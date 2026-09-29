@@ -2,20 +2,25 @@
    catalogo.js · Arranque del catálogo y navegación
    Cargador (logo girando) → el logo vuela junto al nombre → fachada
    interactiva → galería de arcos → colección → pieza.
+   La fachada aparece enseguida (no espera a las piezas: se cargan
+   mientras tanto) y tiene un botón «Entrar al taller».
    La fachada es siempre el inicio: se entra por la puerta y se sale
    por ella (con "atrás", con el botón «salir» o al volver de mandar
    tu pedido por WhatsApp), y se puede volver a entrar cuando quieras.
-   Rutas: (vacía) fachada · #taller · #c/coleccion · #p/pieza · #contacto
+   Rutas: (vacía) fachada · #taller · #c/coleccion · #p/pieza · #buscar
+          · #seleccion · #cotizar · #cotizar/pieza · #sobre · #contacto
    ================================================================== */
 (function () {
   'use strict';
   const I = window.Inluna, D = window.Datos, A = window.Arte;
   const { $, espera, reducido, estado } = I;
-  const Fachada = window.Fachada, Taller = window.Taller;
+  const Fachada = window.Fachada, Taller = window.Taller, Ficha = window.Ficha;
   const CLAVE_PEDIDO = 'inluna:pedido';
+  const HOJAS = { contacto: () => Taller, seleccion: () => window.Seleccion, cotizar: () => window.Cotizar, sobre: () => window.Sobre };
   let dentro = false, saliendo = false, pedidoPendiente = false, seFue = false;
+  let datosListos = null; // promesa con los primeros datos que sirvan
 
-  const datosFachada = () => ({ nombre: estado.ajustes.nombre, antes: estado.ajustes.antesDelNombre, onEntrar: entrarAlTaller });
+  const datosFachada = () => ({ nombre: estado.ajustes.nombre, antes: estado.ajustes.antesDelNombre, onEntrar: entrarAlTaller, preparar: prepararEntrada });
 
   async function iniciar() {
     const t0 = performance.now();
@@ -31,30 +36,17 @@
     const saltarEntrada = ruta.tipo !== 'fachada';
 
     if (!saltarEntrada) Fachada.construir(datosFachada());
+    cargarDatos();
+    const fuentes = fuentesListas(saltarEntrada ? 1600 : 1100);
 
-    const fuentes = document.fonts
-      ? Promise.race([Promise.all([
-        document.fonts.load('italic 500 40px Fraunces'), document.fonts.load('500 16px Fraunces'),
-        document.fonts.load('400 16px "Klee One"'), document.fonts.load('600 16px "Klee One"'),
-      ]).catch(() => {}), espera(2200)])
-      : Promise.resolve();
-
-    const carga = D.cargar();
-    let datos = carga.inmediato;
-    if (datos) {
-      carga.fresco.then(actualizar).catch((e) => console.warn('[Inluna] Usando la copia guardada:', e.message));
-    } else {
-      try { datos = await carga.fresco; } catch (e) { errorCarga(e); return; }
+    if (saltarEntrada) {
+      try { aplicar(await datosListos); } catch (e) { errorCarga(e); return; }
     }
     await fuentes;
-    I.aplicarDatos(datos);
-    Fachada.ponerNombre(estado.ajustes.nombre, estado.ajustes.antesDelNombre);
-
-    const minimo = reducido ? 250 : saltarEntrada ? 900 : 1400;
+    const minimo = reducido ? 150 : saltarEntrada ? 450 : 540;
     const pasado = performance.now() - t0;
     if (pasado < minimo) await espera(minimo - pasado);
 
-    estado.listo = true;
     I.botonSonido();
     if (saltarEntrada) {
       await quitarCargador();
@@ -63,14 +55,61 @@
       await cargadorAlFronton();
       Fachada.animar();
       if (pedido) Fachada.nota(true);
+      setTimeout(() => I.medirFluidez(), 2400);
     }
   }
 
+  /* ---------- datos ---------- */
+  function cargarDatos() {
+    const carga = D.cargar();
+    if (carga.inmediato) datosListos = Promise.resolve(carga.inmediato);
+    else {
+      // lo primero que llegue: la copia publicada en el sitio o el servidor
+      datosListos = new Promise((ok, no) => {
+        let fallos = 0;
+        const falla = (e) => { if (++fallos === 2) no(e || new Error('Sin datos')); };
+        carga.rapido.then((d) => (d ? ok(d) : falla())).catch(falla);
+        carga.fresco.then(ok).catch(falla);
+      });
+    }
+    datosListos.then(aplicar).catch(() => {});
+    carga.fresco.then(actualizar).catch((e) => console.warn('[Inluna] Usando la copia guardada:', e.message));
+  }
+
+  function aplicar(datos) {
+    if (estado.listo || !datos) return;
+    I.aplicarDatos(datos);
+    Fachada.ponerNombre(estado.ajustes.nombre, estado.ajustes.antesDelNombre);
+    estado.listo = true;
+    window.Seleccion.pintarMarcas();
+  }
+
   function actualizar(nuevos) {
+    if (!estado.listo) return; // (los primeros datos los pone aplicar)
     if (JSON.stringify([estado.productos, estado.ajustes]) === JSON.stringify([nuevos.productos, nuevos.ajustes])) return;
     I.aplicarDatos(nuevos);
     Fachada.ponerNombre(estado.ajustes.nombre, estado.ajustes.antesDelNombre);
     if (!$('#taller').hidden) Taller.refrescar();
+    window.Seleccion.pintarMarcas();
+  }
+
+  /* La puerta espera a que lleguen las piezas (casi siempre ya llegaron) */
+  function prepararEntrada() {
+    if (estado.listo) return null;
+    return datosListos.catch(() => { cargarDatos(); return datosListos; }).then(aplicar);
+  }
+
+  /* ---------- tipografías (sin detener la primera pintura) ---------- */
+  function fuentesListas(max) {
+    if (!document.fonts) return Promise.resolve();
+    const hoja = document.getElementById('fuentes');
+    const css = !hoja || hoja.media === 'all' ? Promise.resolve()
+      : new Promise((ok) => { hoja.addEventListener('load', ok, { once: true }); hoja.addEventListener('error', ok, { once: true }); });
+    const cargas = css.then(() => Promise.all([
+      document.fonts.load('italic 500 40px Fraunces'), document.fonts.load('500 16px Fraunces'),
+      document.fonts.load('400 16px "Klee One"'), document.fonts.load('600 16px "Klee One"'),
+    ])).catch(() => {});
+    return Promise.race([cargas, espera(max)]);
   }
 
   /* ---------- cargador ---------- */
@@ -101,10 +140,10 @@
     const dx = b.left + b.width / 2 - (a.left + a.width / 2);
     const dy = b.top + b.height / 2 - (a.top + a.height / 2);
     cargador.classList.add('transparente');
-    logo.style.transition = 'transform .8s cubic-bezier(.7,0,.2,1)';
+    logo.style.transition = 'transform .62s cubic-bezier(.7,0,.2,1)';
     logo.getBoundingClientRect();
     logo.style.transform = `translate(${dx}px, ${dy}px) scale(${b.width / a.width})`;
-    await espera(820);
+    await espera(640);
     destino.classList.add('visible');
     cargador.remove();
   }
@@ -112,9 +151,9 @@
   async function quitarCargador() {
     const c = $('#cargador');
     if (!c) return;
-    c.style.transition = 'opacity .35s ease';
+    c.style.transition = 'opacity .3s ease';
     c.style.opacity = '0';
-    await espera(360);
+    await espera(310);
     c.remove();
   }
 
@@ -137,7 +176,7 @@
   /* ---------- entrar y salir del taller ---------- */
   function entrarAlTaller() {
     // al cruzar la puerta queda una entrada en el historial: "atrás" te saca
-    if (leerRuta().tipo === 'fachada') history.pushState({ inluna: true, desdeFachada: true }, '', '#taller');
+    if (leerRuta().tipo === 'fachada') { history.pushState({ inluna: true, desdeFachada: true }, '', '#taller'); pila.push('taller'); }
     mostrarTaller();
   }
 
@@ -211,22 +250,42 @@
     try { h = decodeURIComponent(h); } catch (e) { /* nada */ }
     if (h.startsWith('p/')) return { tipo: 'pieza', id: h.slice(2) };
     if (h.startsWith('c/')) return { tipo: 'coleccion', slug: h.slice(2) };
-    if (h === 'contacto') return { tipo: 'contacto' };
-    if (h === 'taller') return { tipo: 'taller' };
+    if (h === 'cotizar' || h.startsWith('cotizar/')) return { tipo: 'cotizar', id: h.slice(8) };
+    if (['contacto', 'buscar', 'seleccion', 'sobre', 'taller'].includes(h)) return { tipo: h };
     return { tipo: 'fachada' };
   }
-  const limpiarRuta = () => history.replaceState(null, '', location.pathname + location.search);
+  const limpiarRuta = () => { history.replaceState(null, '', location.pathname + location.search); pila.length = 0; pila.push(''); };
+
+  /* Las rutas visitadas (para saber a dónde lleva "atrás") */
+  const rutaDe = (h) => { h = String(h || '').replace(/^#\/?/, ''); try { return decodeURIComponent(h); } catch (e) { return h; } };
+  const pila = [rutaDe(location.hash)];
+  window.addEventListener('popstate', () => {
+    const r = rutaDe(location.hash);
+    const k = pila.lastIndexOf(r);
+    if (k >= 0) pila.length = k + 1; else pila.push(r);
+  });
 
   function navegar(hash, { reemplazar = false } = {}) {
     const url = hash ? `#${hash}` : location.pathname + location.search;
-    if (reemplazar) history.replaceState(history.state, '', url);
-    else history.pushState({ inluna: true }, '', url);
+    if (reemplazar) { history.replaceState(history.state, '', url); pila[pila.length - 1] = rutaDe(hash); }
+    else { history.pushState({ inluna: true }, '', url); pila.push(rutaDe(hash)); }
     rutear();
+  }
+
+  /* El botón «‹ volver» lleva justo a donde dice: si de ahí venías, es
+     como "atrás"; si no, se va directo (sin dejar la pantalla actual) */
+  function volverA(ruta) {
+    const destino = rutaDe(ruta);
+    if (pila.length > 1 && pila[pila.length - 2] === destino && history.state && history.state.inluna) history.back();
+    else navegar(destino, { reemplazar: true });
   }
 
   function rutaPadre() {
     const r = leerRuta();
-    if (r.tipo === 'pieza' && Taller.coleccionActual()) return `c/${Taller.coleccionActual()}`;
+    if (r.tipo === 'pieza' || HOJAS[r.tipo]) {
+      if (r.tipo === 'cotizar' && r.id && Ficha.abierta()) return `p/${r.id}`;
+      return Taller.rutaLista();
+    }
     return 'taller';
   }
   function volver() {
@@ -234,7 +293,7 @@
     else navegar(rutaPadre(), { reemplazar: true });
   }
   function cerrarPiezaRuta() {
-    if (leerRuta().tipo !== 'pieza') { Taller.cerrarPieza(); return; }
+    if (leerRuta().tipo !== 'pieza') { Ficha.cerrar(); return; }
     volver();
   }
 
@@ -252,22 +311,31 @@
       else mostrarTaller();
       return;
     }
-    if (r.tipo !== 'contacto') Taller.cerrarContacto();
-    if (r.tipo === 'contacto') {
-      await Taller.cerrarPieza();
-      Taller.abrirContacto();
+    // las hojas que no son de esta ruta se cierran
+    Object.keys(HOJAS).forEach((k) => {
+      if (k === r.tipo) return;
+      const m = HOJAS[k]();
+      if (k === 'contacto') m.cerrarContacto(); else m.cerrar();
+    });
+    if (HOJAS[r.tipo]) {
+      // (se abren encima de lo que haya: la colección o la pieza)
+      if (r.tipo === 'contacto') Taller.abrirContacto();
+      else if (r.tipo === 'cotizar') window.Cotizar.abrir({ id: r.id });
+      else HOJAS[r.tipo]().abrir();
       return;
     }
     if (r.tipo === 'pieza') {
       const p = estado.productos.find((x) => x.id === r.id);
       if (!p) { I.aviso('Esa pieza ya no está en el catálogo.'); navegar('taller', { reemplazar: true }); return; }
       if (!Taller.coleccionAbierta()) Taller.mostrarColeccion(D.slug(p.categoria || 'Piezas'));
-      Taller.abrirPieza(p, { direccion: Taller.direccion() });
+      Ficha.abrir(p, { direccion: Ficha.direccion() });
       return;
     }
-    await Taller.cerrarPieza();
+    await Ficha.cerrar();
     if (r.tipo === 'coleccion') {
       if (!Taller.mostrarColeccion(r.slug)) navegar('taller', { reemplazar: true });
+    } else if (r.tipo === 'buscar') {
+      Taller.mostrarBusqueda();
     } else {
       await Taller.cerrarColeccion();
     }
@@ -285,11 +353,13 @@
     const a = e.target.closest('a[href^="#"]');
     if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     e.preventDefault();
-    if (a.hasAttribute('data-volver')) { volver(); return; }
-    navegar(a.getAttribute('href').slice(1), { reemplazar: a.hasAttribute('data-reemplazar') });
+    if (a.hasAttribute('data-volver')) { volverA(a.getAttribute('href').slice(1)); return; }
+    const destino = a.getAttribute('href').slice(1);
+    if (destino === location.hash.slice(1)) return;
+    navegar(destino, { reemplazar: a.hasAttribute('data-reemplazar') });
   });
   window.addEventListener('popstate', rutear);
 
-  Object.assign(I, { navegar, volver, cerrarPiezaRuta, leerRuta });
+  Object.assign(I, { navegar, volver, volverA, cerrarPiezaRuta, leerRuta });
   iniciar().catch((e) => { console.error(e); errorCarga(e); });
 })();

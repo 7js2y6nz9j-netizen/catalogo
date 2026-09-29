@@ -50,6 +50,30 @@
     const s = String(v == null ? '' : v).trim().toLowerCase();
     return /^#[0-9a-f]{6}$/.test(s) ? s : '';
   }
+  /* Variantes ("CH, M, G") → ['CH', 'M', 'G'] */
+  function listaVariantes(v) {
+    const partes = Array.isArray(v) ? v : String(v == null ? '' : v).split(/[,;\n]+/);
+    const vistas = new Set();
+    return partes.map((x) => String(x).trim().slice(0, 40)).filter((x) => {
+      const k = sinAcentos(x).toLowerCase();
+      if (!x || vistas.has(k)) return false;
+      vistas.add(k);
+      return true;
+    }).slice(0, 20);
+  }
+  /* Pedido mínimo: entero mayor que 1 (0 = sin mínimo) */
+  function normalizarMinimo(v) {
+    const n = Math.floor(Number(String(v == null ? '' : v).replace(/[^\d.]/g, '')));
+    return n > 1 ? Math.min(n, 100000) : 0;
+  }
+  const textoCorto = (v, max) => String(v == null ? '' : v).trim().slice(0, max);
+  /* Precio → { min, max } en números ("350", "$1,200", "170 - 300"); null si es texto */
+  function rangoPrecio(precio) {
+    if (typeof precio === 'number') return isFinite(precio) ? { min: precio, max: precio } : null;
+    const nums = (String(precio == null ? '' : precio).match(/\d[\d,]*(\.\d+)?/g) || [])
+      .map((t) => Number(t.replace(/,(?=\d{3}\b)/g, '').replace(/,/g, '.'))).filter((n) => isFinite(n) && n > 0);
+    return nums.length ? { min: Math.min(...nums), max: Math.max(...nums) } : null;
+  }
 
   function normalizarProducto(p, i) {
     const nombre = String(p.nombre == null ? '' : p.nombre).trim();
@@ -66,13 +90,20 @@
       destacado: esVerdadero(p.destacado),
       animacion: normalizarAnimacion(p.animacion),
       color: normalizarColor(p.color),
+      medidas: textoCorto(p.medidas, 120),
+      entrega: textoCorto(p.entrega, 80),
+      minimo: normalizarMinimo(p.minimo),
+      tallas: listaVariantes(p.tallas),
+      colores: listaVariantes(p.colores),
+      materiales: listaVariantes(p.materiales),
       orden: Number(p.orden) || 1000 + i,
     };
   }
   /* Vuelve a unir fotos y dibujos para guardarlos */
   const unirFotos = (fotos, dibujos) => fotos.map((f, i) => (dibujos && dibujos[i] ? `${f}|${dibujos[i]}` : f));
 
-  const CAMPOS_AJUSTES = ['nombre', 'antesDelNombre', 'lema', 'whatsapp', 'instagram', 'moneda', 'mensajeWhatsApp'];
+  const CAMPOS_AJUSTES = ['nombre', 'antesDelNombre', 'lema', 'whatsapp', 'instagram', 'moneda', 'mensajeWhatsApp',
+    'sobreQuien', 'sobreProceso', 'sobreMateriales', 'sobreFoto'];
   function mezclarAjustes(a) {
     const res = {};
     CAMPOS_AJUSTES.forEach((k) => {
@@ -216,7 +247,9 @@
     };
   }
 
-  const url = String(CFG.urlScript || '').trim();
+  // (en tu computadora, "?prueba" abre las piezas de ejemplo para probar sin tocar tu hoja)
+  const pruebaLocal = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && /[?&]prueba\b/.test(location.search);
+  const url = pruebaLocal ? '' : String(CFG.urlScript || '').trim();
   const backend = url ? backendGoogle(url) : backendPrueba();
 
   /* ---------- carga del catálogo (con copia guardada) ---------- */
@@ -228,8 +261,18 @@
     return null;
   }
 
-  /* Devuelve { inmediato, fresco }:
-     · inmediato: la última copia guardada (para abrir al instante) o null
+  /* Copia del catálogo publicada junto a la página (datos/catalogo.json, la
+     renueva cada hora el robot de GitHub): llega en un instante la primera vez */
+  function copiaDelSitio() {
+    if (backend.tipo !== 'google' || !/^https?:/.test(location.protocol)) return Promise.resolve(null);
+    return conTiempo(fetch('datos/catalogo.json', { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)), 4000)
+      .then((d) => (d && Array.isArray(d.productos) ? Object.assign(procesar(d), { fuente: 'copia' }) : null))
+      .catch(() => null);
+  }
+
+  /* Devuelve { inmediato, rapido, fresco }:
+     · inmediato: la última copia guardada en este teléfono (para abrir al instante) o null
+     · rapido: promesa con la copia publicada en el sitio (o null)
      · fresco: promesa con los datos recién pedidos al servidor */
   function cargar() {
     const cache = backend.tipo === 'google' ? leerCache() : null;
@@ -243,12 +286,13 @@
     });
     let inmediato = null;
     if (cache) { inmediato = procesar(cache); inmediato.fuente = 'copia'; }
-    return { inmediato, fresco };
+    return { inmediato, rapido: cache ? Promise.resolve(null) : copiaDelSitio(), fresco };
   }
 
   window.Datos = {
     backend, cargar, procesar, normalizarProducto, normalizarEstado, normalizarAnimacion, normalizarColor, mezclarAjustes,
     urlImagen, urlImagenAlterna, idDeDrive, formatoPrecio, slug, listaFotos, esVerdadero, parFoto, unirFotos,
+    listaVariantes, normalizarMinimo, rangoPrecio, sinAcentos,
     ANIMACIONES, modoPrueba: backend.tipo === 'prueba',
   };
 })();

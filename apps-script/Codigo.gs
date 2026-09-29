@@ -26,7 +26,10 @@ const CLAVE_DEL_PANEL = 'cambia-esta-clave';
 
 const HOJA_PIEZAS = 'piezas';
 const HOJA_AJUSTES = 'ajustes';
-const COLUMNAS = ['id', 'nombre', 'precio', 'categoria', 'descripcion', 'fotos', 'estado', 'destacado', 'animacion', 'color', 'orden', 'actualizado'];
+const COLUMNAS = ['id', 'nombre', 'precio', 'categoria', 'descripcion', 'fotos', 'estado', 'destacado', 'animacion', 'color',
+  'medidas', 'entrega', 'minimo', 'tallas', 'colores', 'materiales', 'orden', 'actualizado'];
+// (columnas que se guardan como texto, tal cual)
+const COLUMNAS_TEXTO = ['id', 'nombre', 'categoria', 'descripcion', 'fotos', 'animacion', 'color', 'medidas', 'entrega', 'tallas', 'colores', 'materiales'];
 const ESTADOS = ['disponible', 'encargo', 'agotado', 'oculto'];
 const ANIMACIONES = ['auto', 'vapor', 'colgar', 'girar', 'hojear', 'brillo', 'flores', 'llama', 'ninguna'];
 const AJUSTES_INICIALES = [
@@ -37,6 +40,10 @@ const AJUSTES_INICIALES = [
   ['instagram', ''],
   ['moneda', 'MXN'],
   ['mensajeWhatsApp', '¡Hola! Me interesa {pieza} ({precio}) que vi en tu catálogo: {enlace}'],
+  ['sobreQuien', ''],
+  ['sobreProceso', ''],
+  ['sobreMateriales', ''],
+  ['sobreFoto', ''],
 ];
 const NOMBRE_CARPETA = 'Inluna · fotos del catálogo';
 const DIAS_SESION = 30;
@@ -45,6 +52,8 @@ const ALIAS = {
   'categoría': 'categoria', 'coleccion': 'categoria', 'colección': 'categoria',
   'descripción': 'descripcion', 'foto': 'fotos', 'imagen': 'fotos', 'imagenes': 'fotos', 'imágenes': 'fotos',
   'favorita': 'destacado', 'destacada': 'destacado', 'favoritas': 'destacado',
+  'medida': 'medidas', 'tiempo de entrega': 'entrega', 'entrega aproximada': 'entrega',
+  'cantidad minima': 'minimo', 'pedido minimo': 'minimo', 'talla': 'tallas', 'material': 'materiales',
 };
 
 /* ==================================================================
@@ -68,10 +77,11 @@ function configurar() {
     hoja.getRange(1, 1, 1, COLUMNAS.length).setValues([COLUMNAS])
       .setFontWeight('bold').setBackground('#2742b0').setFontColor('#ffffff');
     hoja.setFrozenRows(1);
-    const anchos = { id: 150, nombre: 200, precio: 90, categoria: 130, descripcion: 320, fotos: 260, estado: 110, destacado: 90, animacion: 110, color: 90, orden: 70, actualizado: 150 };
+    const anchos = { id: 150, nombre: 200, precio: 90, categoria: 130, descripcion: 320, fotos: 260, estado: 110, destacado: 90, animacion: 110, color: 90,
+      medidas: 140, entrega: 120, minimo: 70, tallas: 130, colores: 150, materiales: 150, orden: 70, actualizado: 150 };
     COLUMNAS.forEach(function (c, i) {
       hoja.setColumnWidth(i + 1, anchos[c] || 120);
-      if (['id', 'nombre', 'categoria', 'descripcion', 'fotos', 'animacion', 'color'].indexOf(c) >= 0) hoja.getRange(2, i + 1, 999, 1).setNumberFormat('@');
+      if (COLUMNAS_TEXTO.indexOf(c) >= 0) hoja.getRange(2, i + 1, 999, 1).setNumberFormat('@');
     });
     const colEstado = COLUMNAS.indexOf('estado') + 1, colDest = COLUMNAS.indexOf('destacado') + 1, colAnim = COLUMNAS.indexOf('animacion') + 1;
     hoja.getRange(2, colEstado, 999, 1).setDataValidation(
@@ -182,6 +192,12 @@ function guardar_(p) {
     destacado: p.destacado === true || p.destacado === 'true',
     animacion: normalizarAnimacion_(p.animacion),
     color: normalizarColor_(p.color),
+    medidas: String(p.medidas || '').trim().slice(0, 120),
+    entrega: String(p.entrega || '').trim().slice(0, 80),
+    minimo: normalizarMinimo_(p.minimo),
+    tallas: listaCorta_(p.tallas),
+    colores: listaCorta_(p.colores),
+    materiales: listaCorta_(p.materiales),
     orden: fila ? (Number(fila.orden) || datos.filas.length + 1) : siguienteOrden_(datos.filas),
     actualizado: new Date(),
   };
@@ -259,7 +275,7 @@ function guardarAjustes_(nuevos) {
   AJUSTES_INICIALES.forEach(function (a) {
     const k = a[0];
     if (!Object.prototype.hasOwnProperty.call(nuevos, k)) return;
-    const v = textoSeguro_(String(nuevos[k] == null ? '' : nuevos[k]).slice(0, 600));
+    const v = textoSeguro_(String(nuevos[k] == null ? '' : nuevos[k]).slice(0, k.indexOf('sobre') === 0 ? 3000 : 600));
     let i = -1;
     for (let r = 0; r < valores.length; r++) { if (String(valores[r][0]).trim() === k) { i = r; break; } }
     if (i >= 0) hoja.getRange(i + 1, 2).setValue(v);
@@ -379,6 +395,12 @@ function limpiarPieza_(f) {
     destacado: f.destacado === true || /^(si|sí|true|verdadero|x|1)$/i.test(String(f.destacado || '').trim()),
     animacion: normalizarAnimacion_(f.animacion),
     color: normalizarColor_(f.color),
+    medidas: String(f.medidas || '').trim(),
+    entrega: String(f.entrega || '').trim(),
+    minimo: normalizarMinimo_(f.minimo),
+    tallas: listaCorta_(f.tallas),
+    colores: listaCorta_(f.colores),
+    materiales: listaCorta_(f.materiales),
     orden: Number(f.orden) || 0,
   };
 }
@@ -387,6 +409,21 @@ function limpiarPieza_(f) {
 function normalizarColor_(v) {
   const s = String(v || '').trim().toLowerCase();
   return /^#[0-9a-f]{6}$/.test(s) ? s : '';
+}
+
+/* Pedido mínimo: un número entero mayor que 1 (vacío = sin mínimo) */
+function normalizarMinimo_(v) {
+  const n = Math.floor(Number(String(v == null ? '' : v).replace(/[^\d.]/g, '')));
+  return n > 1 ? Math.min(n, 100000) : '';
+}
+
+/* Variantes para elegir ("CH, MD, G"): texto limpio, separado por comas */
+function listaCorta_(v) {
+  const partes = Array.isArray(v) ? v : String(v == null ? '' : v).split(/[,;\n]+/);
+  const vistas = {};
+  return partes.map(function (x) { return String(x).trim().slice(0, 40); })
+    .filter(function (x) { const k = x.toLowerCase(); if (!x || vistas[k]) return false; vistas[k] = true; return true; })
+    .slice(0, 20).join(', ');
 }
 
 function normalizarAnimacion_(v) {
@@ -407,7 +444,7 @@ function asegurarColumnas_(hoja) {
     if (actuales.indexOf(c) < 0) {
       col += 1;
       hoja.getRange(1, col).setValue(c).setFontWeight('bold').setBackground('#2742b0').setFontColor('#ffffff');
-      if (c === 'color') hoja.getRange(2, col, 999, 1).setNumberFormat('@');
+      if (COLUMNAS_TEXTO.indexOf(c) >= 0) hoja.getRange(2, col, 999, 1).setNumberFormat('@');
       if (c === 'animacion') {
         hoja.getRange(2, col, 999, 1).setNumberFormat('@').setDataValidation(
           SpreadsheetApp.newDataValidation().requireValueInList(ANIMACIONES, true).setAllowInvalid(true).build());

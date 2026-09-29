@@ -36,13 +36,14 @@ body { overflow-x: hidden; }
 .boton-sonido {
   position: fixed; top: calc(10px + var(--seguro-arriba)); right: 12px; z-index: 55;
   display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 5px 12px 5px 9px;
-  border: 1.5px solid var(--oscura); border-radius: 999px; background: rgba(251, 248, 241, 0.88);
-  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  border: 1.5px solid var(--oscura); border-radius: 999px; background: rgba(251, 248, 241, 0.96);
   font-family: var(--f-mano); font-size: 12.5px; color: var(--oscura); cursor: pointer;
   box-shadow: 0 2px 0 var(--oscura); animation: aparecer 0.5s ease both;
 }
 .boton-sonido .icono { width: 18px; height: 18px; }
 .boton-sonido[aria-pressed='true'] { background: var(--acento); color: var(--papel-3); border-color: var(--acento); }
+/* en una colección o en el buscador, arriba a la derecha van buscar y mi selección */
+html.con-capa .boton-sonido { display: none; }
 .boton-sonido:active { transform: translateY(2px); box-shadow: none; }
 .destellos { position: fixed; inset: 0; z-index: 70; pointer-events: none; overflow: hidden; }
 .chispita {
@@ -74,9 +75,10 @@ body { overflow-x: hidden; }
   opacity: 0; transition: opacity 0.9s ease 0.1s;
 }
 .entrada.lista .arbol { opacity: 1; }
-.arbol svg { width: 100%; height: auto; overflow: visible; }
-.arbol .arbol-copa { transform-box: view-box; animation: brisa 5.5s ease-in-out infinite alternate; }
-.arbol.sacude .arbol-copa { animation: sacudir-arbol 0.9s ease; }
+/* (se mece el dibujo entero, no sus hojas una por una: así lo mueve la
+   tarjeta de video del teléfono y no hay que redibujar el árbol) */
+.arbol svg { width: 100%; height: auto; overflow: visible; transform-origin: 100% 6%; animation: brisa 5.5s ease-in-out infinite alternate; }
+.arbol.sacude svg { animation: sacudir-arbol 0.9s ease; }
 .arbol:focus-visible { outline: 3px solid var(--acento); outline-offset: -8px; border-radius: 40px; }
 @media (max-width: 600px) { .arbol { width: 124vw; right: -30vw; top: calc(1vh + var(--seguro-arriba)); } }
 @keyframes brisa { from { transform: rotate(-0.6deg); } to { transform: rotate(0.8deg); } }
@@ -119,17 +121,19 @@ body { overflow-x: hidden; }
 /* la casa, abajo al centro */
 .casa-lugar {
   position: absolute; left: 0; right: 0; z-index: 2; display: flex; justify-content: center; pointer-events: none;
-  bottom: calc(clamp(44px, 7vh, 70px) + var(--seguro-abajo));
+  bottom: calc(clamp(86px, 12vh, 112px) + var(--seguro-abajo));
 }
 .casa {
   position: relative; flex: none; pointer-events: auto;
-  width: min(104vw, 560px, calc((100vh - 170px) * 0.8));
-  width: min(104vw, 560px, calc((100svh - 170px) * 0.8));
+  width: min(104vw, 560px, calc((100vh - 215px) * 0.8));
+  width: min(104vw, 560px, calc((100svh - 215px) * 0.8));
   aspect-ratio: 400 / 500;
 }
 .casa > .fachada-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
 .fachada-casa { z-index: 2; opacity: 0; transition: opacity 0.7s ease; }
-.fachada-viva { z-index: 5; transition: opacity 0.35s ease; }
+/* la enredadera y las macetas se mueven en su propia capa: así no se
+   vuelve a pintar la casa (ni su filtro de tinta) en cada cuadro */
+.fachada-viva { z-index: 5; transition: opacity 0.35s ease; will-change: transform; }
 .entrada.lista .fachada-casa { opacity: 1; }
 .fz-letrero { font-family: var(--f-titulo); font-style: italic; font-weight: 500; font-size: 23px; }
 .fz-logo { opacity: 0; }
@@ -211,6 +215,7 @@ body { overflow-x: hidden; }
 .celosia .cl-hueco { transition: fill 0.35s ease; }
 .celosia.encendida .cl-hueco { fill: #ffd46b; }
 .celosia.encendida svg { filter: drop-shadow(0 0 6px rgba(255, 212, 107, 0.8)); }
+.maceta { will-change: transform; }
 .maceta svg { width: 100%; height: 100%; overflow: visible; }
 .maceta .topiario-copa { transform-box: view-box; animation: topiario-brisa 3.2s ease-in-out infinite alternate; }
 .maceta.sacude .topiario-copa { animation: sacudir-topiario 0.8s ease; }
@@ -224,19 +229,37 @@ body { overflow-x: hidden; }
 @keyframes farol-mece { 12% { transform: rotate(22deg); } 32% { transform: rotate(-15deg); } 52% { transform: rotate(9deg); } 74% { transform: rotate(-4deg); } 100% { transform: rotate(0); } }
 @keyframes farol-luz { from { opacity: 0.65; } to { opacity: 1; } }
 
-/* pista de las puertas */
+/* abajo: el botón «Entrar al taller» (y la pista de las puertas) */
 .entrada-pistas {
-  position: absolute; left: 0; right: 0; bottom: 0; z-index: 7; text-align: center; pointer-events: none;
-  padding: 0 16px calc(clamp(12px, 2.6vh, 28px) + var(--seguro-abajo));
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 7; pointer-events: none;
+  display: grid; justify-items: center; gap: 4px;
+  padding: 0 16px calc(clamp(10px, 2.2vh, 24px) + var(--seguro-abajo));
 }
+.boton-entrar {
+  pointer-events: auto; min-height: 52px; padding: 0.7em 1.4em 0.7em 1.6em; font-size: 16.5px; gap: 0.6em;
+  opacity: 0; transform: translateY(8px); transition: opacity 0.45s ease 0.25s, transform 0.45s ease 0.25s, background-color 0.2s ease;
+}
+.boton-entrar .icono { width: 20px; height: 20px; transition: transform 0.25s ease; }
+.entrada.lista .boton-entrar { opacity: 1; transform: none; }
+.entrada.llamar:not(.abriendo) .boton-entrar { animation: llamar-entrar 2.8s ease-in-out infinite; }
+.entrada.llamar:not(.abriendo) .boton-entrar .icono { animation: senalar-dentro 1.4s ease-in-out infinite; }
+@keyframes llamar-entrar { 0%, 70%, 100% { box-shadow: 0 3px 0 var(--oscura), 0 0 0 0 rgba(22, 128, 58, 0.35); } 85% { box-shadow: 0 3px 0 var(--oscura), 0 0 0 10px rgba(22, 128, 58, 0); } }
+@keyframes senalar-dentro { 50% { transform: translateX(4px); } }
+.entrada.abriendo .boton-entrar { opacity: 0; pointer-events: none; transition-delay: 0s; transition-duration: 0.2s; }
 .entrada-pista {
-  display: inline-flex; align-items: center; gap: 8px; margin: 0;
-  font-family: var(--f-mano); font-size: 16px; color: var(--acento);
+  display: inline-flex; align-items: center; gap: 6px; margin: 0;
+  font-family: var(--f-mano); font-size: 13.5px; color: var(--acento);
   opacity: 0; transition: opacity 0.5s ease 0.5s;
 }
-.entrada.viva .entrada-pista { opacity: 1; }
+.entrada.viva .entrada-pista { opacity: 0.85; }
 .entrada.abriendo .entrada-pista, .entrada.abriendo .entrada-pista2 { opacity: 0; transition-delay: 0s; transition-duration: 0.25s; }
-.pista-icono { width: 22px; height: 22px; animation: senalar-lados 1.2s ease-in-out infinite; }
+.entrada-espera {
+  position: absolute; left: 0; right: 0; bottom: calc(clamp(10px, 2.2vh, 24px) + var(--seguro-abajo) + 18px); margin: 0;
+  font-family: var(--f-mano); font-size: 16px; color: var(--acento); text-align: center;
+  opacity: 0; transition: opacity 0.3s ease; pointer-events: none;
+}
+.entrada.esperando .entrada-espera { opacity: 1; animation: pista-latido 1.2s ease-in-out infinite; }
+.pista-icono { width: 18px; height: 18px; animation: senalar-lados 1.2s ease-in-out infinite; }
 @keyframes senalar-lados { 50% { transform: scaleX(1.3); } }
 .entrada.abriendo .fachada-viva { opacity: 0; transition: opacity 0.35s ease 0.25s; }
 
@@ -260,12 +283,14 @@ body { overflow-x: hidden; }
 .taller { position: fixed; inset: 0; overflow: hidden; background: var(--papel); }
 .taller > * { transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s ease, filter 0.4s ease; }
 .taller.atras .t-contenido { transform: scale(0.94); opacity: 0.5; }
+/* con la colección encima, el taller ni se pinta ni se anima */
+.taller.tapado { visibility: hidden; }
+.taller.tapado * { animation-play-state: paused !important; }
 /* salir del taller (arriba a la izquierda): vuelves a la fachada por la puerta */
 .t-salir {
   position: fixed; top: calc(10px + var(--seguro-arriba)); left: 12px; z-index: 8;
   display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 5px 13px 5px 10px;
-  border: 1.5px solid var(--oscura); border-radius: 999px; background: rgba(251, 248, 241, 0.9);
-  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  border: 1.5px solid var(--oscura); border-radius: 999px; background: rgba(251, 248, 241, 0.96);
   font-family: var(--f-mano); font-size: 12.5px; color: var(--oscura); text-decoration: none;
   box-shadow: 0 2px 0 var(--oscura); animation: aparecer 0.5s ease 0.4s both;
 }
@@ -285,10 +310,10 @@ body { overflow-x: hidden; }
   opacity: 0; animation: aparecer 0.8s ease 0.15s forwards;
 }
 .t-luna-boton { display: block; width: 100%; padding: 0; border: 0; background: none; cursor: pointer; }
-.t-luna-boton svg { width: 100%; height: auto; overflow: visible; }
-/* el logo de hojas grande del fondo gira muy despacio; al tocarlo da un giro */
-.t-luna-boton .hojas-fondo { transform-box: view-box; transform-origin: 50% 50%; animation: hojas-giran 70s linear infinite; }
-.t-luna-boton.brilla svg { animation: hojas-toque 1.1s cubic-bezier(0.2, 0.8, 0.3, 1); }
+/* el logo de hojas grande del fondo gira muy despacio; al tocarlo da un giro
+   (gira el dibujo entero: lo mueve la tarjeta de video, sin redibujar) */
+.t-luna-boton svg { width: 100%; height: auto; overflow: visible; animation: hojas-giran 70s linear infinite; }
+.t-luna-boton.brilla { animation: hojas-toque 1.1s cubic-bezier(0.2, 0.8, 0.3, 1); }
 .t-lamparas { position: absolute; left: 0; right: 0; top: 50px; z-index: 6; height: 0; }
 .t-lampara {
   position: absolute; top: 0; width: 56px; padding: 0; border: 0; background: none; cursor: pointer;
@@ -305,7 +330,7 @@ body { overflow-x: hidden; }
 .t-enr.izq { left: 0; }
 .t-enr.der { right: 0; transform: scaleX(-1); }
 
-.taller { --nicho: min(62vw, 310px, calc((100vh - 330px) * 0.64)); --nicho: min(62vw, 310px, calc((100svh - 330px) * 0.64)); }
+.taller { --nicho: min(62vw, 310px, calc((100vh - 352px) * 0.64)); --nicho: min(62vw, 310px, calc((100svh - 352px) * 0.64)); }
 .t-contenido {
   position: absolute; inset: 0; z-index: 3; display: grid;
   grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto auto;
@@ -315,6 +340,12 @@ body { overflow-x: hidden; }
 .t-cabecera { text-align: center; padding: 10px 70px 0; animation: subir-suave 0.6s cubic-bezier(0.2, 0.8, 0.25, 1) 0.1s both; }
 .t-antes { margin: 0; font-family: var(--f-mano); font-size: 14px; color: var(--acento); letter-spacing: 0.06em; }
 .t-nombre { margin: 0; font-family: var(--f-titulo); font-style: italic; font-weight: 500; font-size: clamp(34px, 9vw, 52px); line-height: 1; }
+.t-sobre {
+  display: inline-block; margin-top: 4px; padding: 2px 10px; border-radius: 999px;
+  font-family: var(--f-mano); font-size: 13.5px; font-weight: 600; color: var(--acento); text-decoration: none;
+}
+.t-sobre:hover { background: var(--acento-suave); }
+.t-sobre:focus-visible { outline: 3px solid var(--acento); outline-offset: 2px; }
 @keyframes subir-suave { from { opacity: 0; transform: translateY(14px); } }
 
 .galeria { position: relative; min-height: 0; display: flex; align-items: center; }
@@ -359,15 +390,18 @@ body { overflow-x: hidden; }
   font-family: var(--f-mano); font-size: 12px; font-weight: 600; box-shadow: 0 2px 0 var(--oscura);
 }
 .galeria-vacia { margin: auto; padding: 20px; font-family: var(--f-mano); font-size: 17px; text-align: center; }
+/* flechas a los lados (también en el teléfono) */
 .galeria-flecha {
-  position: absolute; top: 42%; z-index: 4; display: none; place-items: center; width: 48px; height: 48px;
+  position: absolute; top: 42%; z-index: 4; display: grid; place-items: center; width: 40px; height: 40px; padding: 0;
   border: 2px solid var(--oscura); border-radius: 50%; background: var(--papel-3); color: var(--oscura);
-  cursor: pointer; box-shadow: 0 3px 0 var(--oscura);
+  cursor: pointer; box-shadow: 0 3px 0 var(--oscura); transition: opacity 0.2s ease;
 }
-.galeria-flecha.anterior { left: max(12px, calc(50% - var(--nicho) * 0.5 - 150px)); }
-.galeria-flecha.siguiente { right: max(12px, calc(50% - var(--nicho) * 0.5 - 150px)); }
+.galeria-flecha.anterior { left: max(6px, calc(50% - var(--nicho) * 0.5 - 150px)); }
+.galeria-flecha.siguiente { right: max(6px, calc(50% - var(--nicho) * 0.5 - 150px)); }
 .galeria-flecha:active { transform: translateY(2px); box-shadow: none; }
-@media (hover: hover) and (pointer: fine) { .galeria-flecha { display: grid; } }
+.galeria-flecha:focus-visible { outline: 3px solid var(--acento); outline-offset: 3px; }
+.galeria-flecha[disabled] { opacity: 0; pointer-events: none; }
+@media (min-width: 600px) { .galeria-flecha { width: 48px; height: 48px; } }
 
 .galeria-pie { text-align: center; padding: 4px 16px 0; }
 .puntos { display: flex; justify-content: center; gap: 2px; }
@@ -385,6 +419,19 @@ body { overflow-x: hidden; }
 .boton-hueco { width: 44px; height: 44px; }
 .t-contacto .boton-icono { border-color: var(--oscura); box-shadow: 0 2px 0 var(--oscura); }
 .boton-pedido .icono { width: 16px; height: 16px; }
+/* buscar y mi selección: círculos en el teléfono, con nombre en pantallas anchas */
+.boton-barra { position: relative; flex: none; }
+.boton-barra-texto { display: none; }
+@media (min-width: 640px) {
+  .boton-barra { width: auto; gap: 6px; padding: 0 15px 0 12px; border-radius: 999px; font-family: var(--f-mano); font-weight: 600; font-size: 14px; }
+  .boton-barra-texto { display: inline; }
+}
+.insignia {
+  position: absolute; top: -5px; right: -5px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px;
+  display: grid; place-items: center; background: var(--acento); color: var(--papel-3); border: 1.5px solid var(--papel-3);
+  font-family: var(--f-ui); font-size: 11.5px; font-weight: 700; line-height: 1;
+}
+.boton-seleccion-barra .icono { color: #b3364b; }
 
 /* ------------------------------------------------------------------
    4. COLECCIÓN (se abre desde su arco)
@@ -394,7 +441,7 @@ body { overflow-x: hidden; }
 .col-barra {
   position: sticky; top: 0; z-index: 6; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px;
   padding: calc(8px + var(--seguro-arriba)) 12px 8px;
-  background: rgba(244, 238, 225, 0.92); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  background: rgba(244, 238, 225, 0.97);
   border-bottom: 1px solid var(--linea);
 }
 .volver {
@@ -403,7 +450,12 @@ body { overflow-x: hidden; }
   font-weight: 600; font-size: 14.5px; text-decoration: none; box-shadow: 0 2px 0 var(--oscura);
 }
 .volver:active { transform: translateY(2px); box-shadow: none; }
+.volver:focus-visible { outline: 3px solid var(--acento); outline-offset: 3px; }
+.volver .icono { width: 20px; height: 20px; }
 .col-marca .logo { width: 34px; }
+.col-atajos { justify-self: end; display: flex; gap: 8px; }
+.col-atajos .boton-icono { position: relative; width: 40px; height: 40px; border-color: var(--oscura); box-shadow: 0 2px 0 var(--oscura); }
+.col-atajos .boton-icono:active { transform: translateY(2px); box-shadow: none; }
 .col-cabecera { text-align: center; padding: 22px 20px 0; }
 .col-antes { margin: 0; font-family: var(--f-mano); color: var(--acento); letter-spacing: 0.05em; }
 .col-titulo { margin: 0; font-family: var(--f-titulo); font-style: italic; font-weight: 500; font-size: clamp(38px, 11vw, 62px); line-height: 1.05; }
@@ -421,21 +473,36 @@ body { overflow-x: hidden; }
   display: grid; grid-template-columns: repeat(auto-fill, minmax(min(40vw, 200px), 1fr));
   gap: 26px 18px; max-width: 1080px; margin: 0 auto; padding: 4px 18px 20px;
 }
-.tarjeta {
-  display: flex; flex-direction: column; color: inherit; text-decoration: none; outline: none;
+/* cada tarjeta con su corazón (♡ = guardar en mi selección) */
+.tarjeta-caja {
+  position: relative; display: flex; flex-direction: column; min-width: 0;
   animation: subir-tarjeta 0.55s cubic-bezier(0.2, 0.8, 0.25, 1) calc(var(--i, 0) * 45ms + 80ms) both;
+  content-visibility: auto; contain-intrinsic-size: auto 320px;
 }
+.tarjeta { flex: 1; display: flex; flex-direction: column; color: inherit; text-decoration: none; outline: none; }
 @keyframes subir-tarjeta { from { opacity: 0; transform: translateY(28px) scale(0.96); } }
-.tarjeta-flota { display: block; animation: flotar var(--fd, 3.6s) ease-in-out var(--fdel, 0s) infinite alternate; }
+/* solo flotan las que se ven */
+.tarjeta-flota { display: block; }
+.en-vista .tarjeta-flota { animation: flotar var(--fd, 3.6s) ease-in-out infinite alternate; }
+.tarjeta-caja:not(.en-vista) .marco-img *, .tarjeta-caja:not(.en-vista) .anim-capa { animation: none !important; }
 @keyframes flotar { from { transform: translateY(0); } to { transform: translateY(-8px); } }
+.corazon {
+  position: absolute; top: 9%; right: 1%; z-index: 3; display: grid; place-items: center; width: 38px; height: 38px; padding: 0;
+  border: 1.5px solid var(--oscura); border-radius: 50%; background: var(--papel-3); color: #b3364b; cursor: pointer;
+  box-shadow: 0 2px 0 var(--oscura); transition: transform 0.15s ease, background-color 0.2s ease;
+}
+.corazon .icono { width: 20px; height: 20px; }
+.corazon.activo { background: #fbe9ec; }
+.corazon:active { transform: scale(0.9); }
+.corazon:focus-visible { outline: 3px solid var(--acento); outline-offset: 2px; }
 .tarjeta:active .marco { transform: scale(0.97); }
 @media (hover: hover) { .tarjeta:hover .marco { transform: translateY(-3px) scale(1.02); } }
 .tarjeta:focus-visible .marco { outline: 3px solid var(--acento); outline-offset: 6px; border-radius: 50% 50% 8px 8px / 40% 40% 8px 8px; }
 .tarjeta-sombra {
   display: block; width: 58%; height: 11px; margin: 4px auto 0; border-radius: 50%;
   background: radial-gradient(closest-side, rgba(58, 42, 31, 0.28), rgba(58, 42, 31, 0));
-  animation: sombra-flota var(--fd, 3.6s) ease-in-out var(--fdel, 0s) infinite alternate;
 }
+.en-vista .tarjeta-sombra { animation: sombra-flota var(--fd, 3.6s) ease-in-out infinite alternate; }
 @keyframes sombra-flota { from { transform: scaleX(1); opacity: 1; } to { transform: scaleX(0.76); opacity: 0.5; } }
 .tarjeta-etiqueta {
   display: grid; align-content: center; min-height: 64px; margin: 6px 2px 0; padding: 7px 10px;
@@ -447,7 +514,7 @@ body { overflow-x: hidden; }
 }
 .tarjeta-precio { margin-top: 2px; font-family: var(--f-mano); font-weight: 600; font-size: 14px; color: var(--acento); }
 .sello {
-  position: absolute; top: 11%; right: -6px; z-index: 2; transform: rotate(7deg);
+  position: absolute; top: 11%; left: -6px; z-index: 2; transform: rotate(-7deg);
   padding: 3px 10px; border: 1.5px solid var(--oscura); border-radius: 999px; background: var(--papel-3);
   font-family: var(--f-mano); font-weight: 600; font-size: 12px; line-height: 1.4; box-shadow: 0 2px 0 var(--oscura);
 }
@@ -463,7 +530,12 @@ body { overflow-x: hidden; }
   position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none;
   margin: 0; padding: 0; border: 0; background: transparent; color: var(--oscura); overflow: hidden;
 }
-.ficha::backdrop { background: rgba(244, 238, 225, 0.93); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.ficha::backdrop {
+  background-color: var(--papel);
+  background-image: radial-gradient(circle, rgba(58, 42, 31, 0.12) 1.05px, transparent 1.55px);
+  background-size: 24px 24px; background-position: 12px 12px;
+}
+.ficha-escena:focus { outline: none; }
 .ficha[open]::backdrop { animation: aparecer 0.3s ease; }
 .ficha.cerrando .ficha-escena { opacity: 0; transform: translateY(20px); transition: opacity 0.2s ease, transform 0.2s ease; }
 .ficha-escena { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; }
@@ -472,10 +544,13 @@ body { overflow-x: hidden; }
   padding: calc(10px + var(--seguro-arriba)) 14px 8px;
   background: linear-gradient(rgba(244, 238, 225, 0.96) 70%, rgba(244, 238, 225, 0));
 }
-.ficha-nav { display: flex; align-items: center; gap: 8px; min-height: 44px; }
-.ficha-nav .boton-icono, .ficha-cerrar { border-color: var(--oscura); box-shadow: 0 2px 0 var(--oscura); }
+.ficha-barra .volver { max-width: 58vw; }
+.ficha-barra .volver span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ficha-nav { display: flex; align-items: center; gap: 6px; min-height: 44px; }
+.ficha-nav .boton-icono { width: 40px; height: 40px; border-color: var(--oscura); box-shadow: 0 2px 0 var(--oscura); }
+.ficha-nav .boton-icono:active { transform: translateY(2px); box-shadow: none; }
 .boton-icono.girado .icono { transform: scaleX(-1); }
-.ficha-pos { min-width: 44px; text-align: center; font-family: var(--f-mano); font-weight: 600; font-size: 14px; }
+.ficha-pos { min-width: 50px; text-align: center; font-family: var(--f-mano); font-weight: 600; font-size: 13.5px; white-space: nowrap; }
 .ficha-cuerpo {
   flex: 1; display: grid; align-content: start; gap: 20px; width: 100%; max-width: 1040px; margin: 0 auto;
   padding: 2px 18px calc(28px + var(--seguro-abajo));
@@ -489,11 +564,43 @@ body { overflow-x: hidden; }
 .vitrina-marco::before {
   content: ''; position: absolute; inset: 7px; z-index: 2; pointer-events: none; border: 1.2px solid var(--tinta); border-radius: 16px; opacity: 0.6;
 }
-.vitrina-fotos { display: flex; height: 100%; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+.vitrina-fotos {
+  display: flex; height: 100%; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none;
+  overscroll-behavior-x: contain; outline: none;
+}
 .vitrina-fotos::-webkit-scrollbar { display: none; }
-.vitrina-foto { flex: 0 0 100%; height: 100%; margin: 0; scroll-snap-align: center; display: grid; place-items: center; }
+.vitrina-fotos:focus-visible { box-shadow: inset 0 0 0 3px var(--acento); }
+.vitrina-foto { flex: 0 0 100%; height: 100%; margin: 0; scroll-snap-align: center; scroll-snap-stop: always; display: grid; place-items: center; }
+.vitrina-ampliar { display: block; width: 100%; height: 100%; padding: 0; border: 0; background: none; cursor: zoom-in; }
 .vitrina-foto img { width: 100%; height: 100%; object-fit: contain; opacity: 0; transition: opacity 0.35s ease; }
 .vitrina-foto img.cargada { opacity: 1; }
+/* flechas, cuenta y lupa sobre la foto */
+.vitrina-flecha, .vitrina-zoom {
+  position: absolute; z-index: 4; display: grid; place-items: center; width: 38px; height: 38px; padding: 0;
+  border: 1.5px solid var(--oscura); border-radius: 50%; background: rgba(251, 248, 241, 0.94); color: var(--oscura);
+  cursor: pointer; box-shadow: 0 2px 0 var(--oscura); transition: transform 0.15s ease;
+}
+.vitrina-flecha { top: 50%; margin-top: -19px; }
+.vitrina-flecha.anterior { left: 12px; }
+.vitrina-flecha.siguiente { right: 12px; }
+.vitrina-zoom { right: 12px; bottom: 12px; }
+.vitrina-flecha:active, .vitrina-zoom:active { transform: scale(0.92); }
+.vitrina-flecha:focus-visible, .vitrina-zoom:focus-visible { outline: 3px solid var(--acento); outline-offset: 2px; }
+.vitrina-cuenta {
+  position: absolute; left: 12px; bottom: 14px; z-index: 4; padding: 3px 10px; border-radius: 999px;
+  background: rgba(58, 42, 31, 0.78); color: var(--papel-3); font-family: var(--f-mano); font-weight: 600; font-size: 12.5px;
+}
+.vitrina-miniaturas {
+  display: flex; gap: 8px; margin-top: 12px; padding: 4px 2px; overflow-x: auto; scrollbar-width: none; justify-content: safe center;
+}
+.vitrina-miniaturas::-webkit-scrollbar { display: none; }
+.miniatura {
+  flex: none; width: 54px; height: 54px; padding: 0; overflow: hidden; border: 1.5px solid var(--linea); border-radius: 12px;
+  background: var(--papel-3); cursor: pointer; opacity: 0.72; transition: opacity 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+.miniatura img { width: 100%; height: 100%; object-fit: cover; }
+.miniatura.activa { opacity: 1; border: 2px solid var(--acento); box-shadow: 0 2px 0 var(--oscura); }
+.miniatura:focus-visible { outline: 3px solid var(--acento); outline-offset: 2px; }
 .vitrina-brillo {
   position: absolute; inset: 0; z-index: 3; pointer-events: none;
   background: radial-gradient(circle at var(--bx, 30%) var(--by, 18%), rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 46%);
@@ -553,6 +660,10 @@ body { overflow-x: hidden; }
 .boton-luna:hover { background: #fff; }
 .boton-luna-borde { background: transparent; color: var(--papel-3); border-color: var(--papel-3); box-shadow: 0 3px 0 var(--oscura); }
 .boton-luna-borde:hover { background: rgba(255, 255, 255, 0.1); }
+.contacto-mas { position: relative; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 12px; margin: 18px 0 0; font-family: var(--f-mano); font-size: 15px; }
+.contacto-mas a { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; color: var(--papel-3); text-decoration: none; }
+.contacto-mas a:hover { background: rgba(255, 255, 255, 0.12); }
+.contacto-mas .icono { width: 18px; height: 18px; }
 .contacto-olas {
   position: absolute; left: 0; right: 0; bottom: 0; height: 92px; pointer-events: none;
   background-repeat: repeat-x; background-position: 0 100%; background-size: 120px 92px;
@@ -594,7 +705,28 @@ body { overflow-x: hidden; }
   .dialogo-contacto.cerrando .hoja-contacto { animation: none; opacity: 0; transition: opacity 0.2s; }
 }
 
+/* Mientras la ficha está abierta, lo de atrás no se mueve */
+html.con-ficha .coleccion * { animation-play-state: paused !important; }
+
+/* ------------------------------------------------------------------
+   MODO LIGERO (teléfonos modestos): todo se ve igual, pero quieto
+   ------------------------------------------------------------------ */
+html.ligero .tarjeta-flota, html.ligero .tarjeta-sombra, html.ligero .nicho-marco, html.ligero .nicho-sombra,
+html.ligero .t-lampara, html.ligero .lp-luz, html.ligero .hueco-marco, html.ligero .t-luna-boton svg,
+html.ligero .contacto-hojas, html.ligero .c-estrella, html.ligero .contacto-olas, html.ligero .arbol svg,
+html.ligero .tira, html.ligero .topiario-copa, html.ligero .galeria-pista, html.ligero .pista-icono,
+html.ligero [class*='anim-'] img, html.ligero .anim-capa, html.ligero .anim-capa *,
+html.ligero .boton-entrar, html.ligero .boton-entrar .icono,
+html.ligero .entrada.llamar .hoja-puerta { animation: none !important; }
+html.ligero .anim-capa { display: none; }
+html.ligero .hoja-cae:nth-child(n+4):not(.rafaga) { display: none; }
+html.ligero .tarjeta-caja { animation-duration: 0.3s; animation-delay: 0s; }
+html.ligero .t-enredaderas .hoja, html.ligero .entrada .fachada-viva .hv { animation: none !important; transform: none; scale: 1; }
+html.ligero .t-enredaderas .tallo, html.ligero .entrada .fachada-viva .tallo { animation: none !important; stroke-dashoffset: 0; }
+html.ligero .nicho-marco::before { transition: none; }
+
 @media (prefers-reduced-motion: reduce) {
   .tarjeta-flota, .tarjeta-sombra, .nicho-marco, .nicho-sombra, .farol, .t-lampara, .chispa, .hueco-marco,
-  .hojas-fondo, .contacto-hojas, .hoja-cae, .arbol-copa, .tira, .topiario-copa, .contacto-olas, [class*='anim-'] img, .anim-capa, .anim-capa * { animation: none !important; }
+  .t-luna-boton svg, .contacto-hojas, .hoja-cae, .arbol svg, .tira, .topiario-copa, .contacto-olas, [class*='anim-'] img, .anim-capa, .anim-capa *,
+  .boton-entrar, .boton-entrar .icono { animation: none !important; }
 }

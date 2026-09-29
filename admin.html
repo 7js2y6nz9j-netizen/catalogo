@@ -15,9 +15,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400..600&family=Klee+One:wght@400;600&display=swap">
-  <link rel="stylesheet" href="css/base.css?v=20260929c">
-  <link rel="stylesheet" href="css/piezas.css?v=20260929c">
-  <link rel="stylesheet" href="css/admin.css?v=20260929c">
+  <link rel="stylesheet" href="css/base.css?v=20260930a">
+  <link rel="stylesheet" href="css/piezas.css?v=20260930a">
+  <link rel="stylesheet" href="css/admin.css?v=20260930a">
 </head>
 <body class="admin papel">
 
@@ -185,8 +185,42 @@
 
         <label class="campo">
           <span class="campo-etiqueta">Descripción</span>
-          <textarea name="descripcion" rows="4" placeholder="Medidas, materiales, cuidados…"></textarea>
+          <textarea name="descripcion" rows="4" placeholder="Cómo es, para qué sirve, cuidados…"></textarea>
         </label>
+
+        <!-- Detalles para pedir: se ven en la ficha y viajan en el mensaje de WhatsApp -->
+        <details class="bloque-detalles" id="detalles-pedido">
+          <summary><span class="detalles-titulo">Detalles para pedir</span><span class="detalles-resumen" id="detalles-resumen">medidas, entrega, mínimo y variantes</span></summary>
+          <div class="detalles-cuerpo">
+            <div class="fila-campos">
+              <label class="campo">
+                <span class="campo-etiqueta">Medidas</span>
+                <input name="medidas" maxlength="120" placeholder="Ej. 40 × 20 × 35 cm" autocomplete="off">
+              </label>
+              <label class="campo">
+                <span class="campo-etiqueta">Tiempo de entrega</span>
+                <input name="entrega" maxlength="80" placeholder="Ej. 3 a 5 días" autocomplete="off">
+              </label>
+            </div>
+            <label class="campo">
+              <span class="campo-etiqueta">Pedido mínimo</span>
+              <input name="minimo" type="number" inputmode="numeric" min="1" max="100000" placeholder="Ej. 10 (vacío = sin mínimo)" autocomplete="off">
+            </label>
+            <p class="campo-ayuda detalles-ayuda">✦ Opciones para elegir (sepáralas con comas). Tu cliente las elige en la ficha y llegan en su mensaje.</p>
+            <label class="campo">
+              <span class="campo-etiqueta">Tallas</span>
+              <input name="tallas" maxlength="300" placeholder="Ej. CH, MD, G, EG, KID" autocomplete="off">
+            </label>
+            <label class="campo">
+              <span class="campo-etiqueta">Colores</span>
+              <input name="colores" maxlength="300" placeholder="Ej. Negro, Blanco, Rojo" autocomplete="off">
+            </label>
+            <label class="campo">
+              <span class="campo-etiqueta">Materiales</span>
+              <input name="materiales" maxlength="300" placeholder="Ej. DTF, Vinil, Madera" autocomplete="off">
+            </label>
+          </div>
+        </details>
 
         <fieldset class="campo">
           <legend class="campo-etiqueta">Estado</legend>
@@ -268,6 +302,33 @@
           <textarea name="mensajeWhatsApp" rows="3"></textarea>
           <span class="campo-ayuda">Usa {pieza}, {precio} y {enlace}: se cambian solos por los datos de la pieza.</span>
         </label>
+
+        <!-- «Sobre el taller»: la sección que tus clientes abren desde el catálogo -->
+        <section class="bloque bloque-sobre">
+          <h3 class="bloque-titulo">Sobre el taller <span>lo que ven al tocar «conoce el taller»</span></h3>
+          <div class="sobre-foto-editor">
+            <span class="sobre-foto-vista marco" id="sobre-foto-vista"></span>
+            <div class="sobre-foto-botones">
+              <button type="button" class="boton boton-chico" id="sobre-foto-subir"><span data-icono="foto"></span><span>Subir una foto tuya o del taller</span></button>
+              <button type="button" class="enlace-suave" id="sobre-foto-quitar" hidden>Quitar la foto</button>
+              <input type="file" id="sobre-foto-archivo" accept="image/*" hidden>
+              <input type="hidden" name="sobreFoto">
+            </div>
+          </div>
+          <label class="campo">
+            <span class="campo-etiqueta">Quién está detrás</span>
+            <textarea name="sobreQuien" rows="4" maxlength="2000" placeholder="Ej. Me llamo…, diseño y hago cada pieza en mi taller desde…"></textarea>
+            <span class="campo-ayuda">Cuéntalo con tus palabras. Cada renglón es un párrafo.</span>
+          </label>
+          <label class="campo">
+            <span class="campo-etiqueta">Así trabajo (un paso por renglón)</span>
+            <textarea name="sobreProceso" rows="4" maxlength="2000"></textarea>
+          </label>
+          <label class="campo">
+            <span class="campo-etiqueta">Materiales y técnicas (separados por comas)</span>
+            <textarea name="sobreMateriales" rows="2" maxlength="1000"></textarea>
+          </label>
+        </section>
         <div class="zona-extra" data-prueba hidden>
           <button type="button" class="boton boton-peligro" id="reiniciar-prueba">Borrar datos de prueba</button>
         </div>
@@ -300,13 +361,13 @@
     </filter>
   </svg>
 
-  <script src="js/config.js?v=20260929c"></script>
-  <script src="js/arte.js?v=20260929c"></script>
-  <script src="js/demo.js?v=20260929c"></script>
-  <script src="js/datos.js?v=20260929c"></script>
-  <script src="js/tintas.js?v=20260929c"></script>
-  <script src="js/animaciones.js?v=20260929c"></script>
-  <script src="js/estilo.js?v=20260929c"></script>
-  <script src="js/admin.js?v=20260929c"></script>
+  <script src="js/config.js?v=20260930a"></script>
+  <script src="js/arte.js?v=20260930a"></script>
+  <script src="js/demo.js?v=20260930a"></script>
+  <script src="js/datos.js?v=20260930a"></script>
+  <script src="js/tintas.js?v=20260930a"></script>
+  <script src="js/animaciones.js?v=20260930a"></script>
+  <script src="js/estilo.js?v=20260930a"></script>
+  <script src="js/admin.js?v=20260930a"></script>
 </body>
 </html>

@@ -299,13 +299,32 @@
     f.animacion.value = b.animacion || 'auto';
     f.color.value = Tintas.normalizar(b.color);
     pintarColor();
+    f.medidas.value = b.medidas || '';
+    f.entrega.value = b.entrega || '';
+    f.minimo.value = b.minimo > 1 ? String(b.minimo) : '';
+    ['tallas', 'colores', 'materiales'].forEach((k) => { f[k].value = D.listaVariantes(b[k]).join(', '); });
+    $('#detalles-pedido').open = DETALLES.some((k) => f[k].value.trim());
+    resumirDetalles();
     f.nombre.removeAttribute('aria-invalid');
   }
+
+  /* «Detalles para pedir»: el resumen que se ve con la sección cerrada */
+  const DETALLES = ['medidas', 'entrega', 'minimo', 'tallas', 'colores', 'materiales'];
+  function resumirDetalles() {
+    const f = form.elements;
+    const partes = [
+      f.medidas.value.trim(), f.entrega.value.trim(),
+      Number(f.minimo.value) > 1 ? `mínimo ${Number(f.minimo.value)}` : '',
+      ...['tallas', 'colores', 'materiales'].map((k) => { const n = D.listaVariantes(f[k].value).length; return n ? `${n} ${k}` : ''; }),
+    ].filter(Boolean);
+    $('#detalles-resumen').textContent = partes.length ? partes.join(' · ') : 'medidas, entrega, mínimo y variantes';
+  }
+  form.addEventListener('input', (e) => { if (DETALLES.includes(e.target.name)) resumirDetalles(); });
 
   function abrirEditor(p, { copia = false } = {}) {
     const base = p ? JSON.parse(JSON.stringify(p)) : {
       id: '', nombre: '', precio: '', categoria: estado.ultimaCategoria || '', descripcion: '', fotos: [], dibujos: [], estado: 'disponible', destacado: false, animacion: 'auto',
-      color: estado.ultimoColor || '',
+      color: estado.ultimoColor || '', medidas: '', entrega: '', minimo: 0, tallas: [], colores: [], materiales: [],
     };
     if (copia) { base.id = ''; base.nombre = `${base.nombre} (copia)`; }
     const dibujos = base.dibujos || [];
@@ -669,6 +688,12 @@
       destacado: f.destacado.checked,
       animacion: f.animacion.value || 'auto',
       color: Tintas.normalizar(f.color.value),
+      medidas: f.medidas.value.trim(),
+      entrega: f.entrega.value.trim(),
+      minimo: D.normalizarMinimo(f.minimo.value) || '',
+      tallas: D.listaVariantes(f.tallas.value).join(', '),
+      colores: D.listaVariantes(f.colores.value).join(', '),
+      materiales: D.listaVariantes(f.materiales.value).join(', '),
     };
   }
 
@@ -690,8 +715,8 @@
     boton.textContent = 'Guardando…';
     try {
       const r = await B.guardar(estado.token, datos);
-      // un Apps Script de antes no conoce el color: avisa para actualizarlo
-      const sinColor = datos.color && r.producto && !('color' in r.producto);
+      // un Apps Script de antes no conoce el color ni los detalles: avisa para actualizarlo
+      const sinColor = r.producto && ((datos.color && !('color' in r.producto)) || (DETALLES.some((k) => datos[k]) && !('medidas' in r.producto)));
       const guardado = D.normalizarProducto(r.producto || datos, estado.productos.length);
       const i = estado.productos.findIndex((p) => p.id === guardado.id);
       if (i >= 0) estado.productos[i] = guardado; else estado.productos.push(guardado);
@@ -702,7 +727,7 @@
       renderLista();
       estado.borrador = null;
       await cerrarHoja(dlgEditor);
-      if (sinColor) aviso('Se guardó la pieza, pero tu Apps Script todavía no guarda el color: actualízalo (LEEME.md, paso 1).', 'error');
+      if (sinColor) aviso('Se guardó la pieza, pero tu Apps Script todavía no guarda el color ni los detalles: actualízalo (LEEME.md, paso 1).', 'error');
       else aviso(i >= 0 ? 'Cambios guardados ✓' : 'Pieza agregada al catálogo ✓');
     } catch (err) { manejarError(err); } finally {
       boton.disabled = false;
@@ -732,15 +757,45 @@
      ================================================================ */
   const dlgAjustes = $('#ajustes');
   const formAjustes = $('#form-ajustes');
+  const TEXTOS_AJUSTES = ['nombre', 'antesDelNombre', 'lema', 'whatsapp', 'instagram', 'mensajeWhatsApp', 'sobreQuien', 'sobreProceso', 'sobreMateriales', 'sobreFoto'];
   $('#abrir-ajustes').addEventListener('click', () => {
     const a = estado.ajustes, f = formAjustes.elements;
-    ['nombre', 'antesDelNombre', 'lema', 'whatsapp', 'instagram', 'mensajeWhatsApp'].forEach((k) => { f[k].value = a[k] || ''; });
+    TEXTOS_AJUSTES.forEach((k) => { f[k].value = a[k] || ''; });
     f.moneda.value = a.moneda || 'MXN';
     if (f.moneda.value !== (a.moneda || 'MXN')) {
       f.moneda.insertAdjacentHTML('beforeend', `<option value="${esc(a.moneda)}">${esc(a.moneda)}</option>`);
       f.moneda.value = a.moneda;
     }
+    pintarFotoSobre();
     dlgAjustes.showModal();
+  });
+
+  /* Foto de «Sobre el taller» */
+  function pintarFotoSobre(vista) {
+    const ref = formAjustes.elements.sobreFoto.value;
+    const src = vista || (ref ? D.urlImagen(ref, 480) : '');
+    $('#sobre-foto-vista').innerHTML = `<span class="marco-img">${src ? `<img src="${esc(src)}" alt="" class="cargada">` : `<span class="sin-foto">${A.logo()}</span>`}</span>${A.marcoArco()}`;
+    $('#sobre-foto-quitar').hidden = !ref;
+  }
+  $('#sobre-foto-subir').addEventListener('click', () => $('#sobre-foto-archivo').click());
+  $('#sobre-foto-quitar').addEventListener('click', () => { formAjustes.elements.sobreFoto.value = ''; pintarFotoSobre(); });
+  $('#sobre-foto-archivo').addEventListener('change', async (e) => {
+    const archivo = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!archivo) return;
+    const boton = $('#sobre-foto-subir');
+    boton.disabled = true;
+    try {
+      const lista = await prepararFoto(archivo, D.modoPrueba ? 700 : 1200, D.modoPrueba ? 0.78 : 0.85);
+      pintarFotoSobre(lista.vista);
+      const r = await B.subirFoto(estado.token, { nombre: `taller-${lista.nombre}`, tipo: lista.tipo, datos: lista.datos });
+      formAjustes.elements.sobreFoto.value = r.id;
+      $('#sobre-foto-quitar').hidden = false;
+      aviso('Foto lista: guarda los ajustes para que se vea en el catálogo.');
+    } catch (err) {
+      pintarFotoSobre();
+      manejarError(err);
+    } finally { boton.disabled = false; }
   });
   $('[data-cerrar]', dlgAjustes).addEventListener('click', () => cerrarHoja(dlgAjustes));
   dlgAjustes.addEventListener('cancel', (e) => { e.preventDefault(); cerrarHoja(dlgAjustes); });
@@ -758,6 +813,8 @@
       nombre: f.nombre.value.trim(), antesDelNombre: f.antesDelNombre.value.trim(), lema: f.lema.value.trim(),
       whatsapp: wa, instagram: f.instagram.value.trim().replace(/^@/, ''), moneda: f.moneda.value,
       mensajeWhatsApp: f.mensajeWhatsApp.value.trim(),
+      sobreQuien: f.sobreQuien.value.trim(), sobreProceso: f.sobreProceso.value.trim(),
+      sobreMateriales: f.sobreMateriales.value.trim(), sobreFoto: f.sobreFoto.value.trim(),
     };
     const boton = $('#guardar-ajustes');
     boton.disabled = true;

@@ -2,11 +2,12 @@
    taller.js · El interior del taller
    ------------------------------------------------------------------
    1. Galería de arcos: cada colección vive en un arco; se recorre
-      deslizando (el arco del centro se ilumina y se acerca).
+      deslizando, con las flechas (en pantalla o del teclado) o con los
+      puntitos (el arco del centro se ilumina y se acerca).
    2. Colección: se abre "desde" su arco; las piezas flotan en fila.
-   3. Pieza: ficha inmersiva con la FOTO ORIGINAL (en el catálogo
-      se ve la versión dibujada con el estilo del taller).
-   4. Contacto: panel verde con la luna de Inluna, olas y azulejos.
+      El buscador (js/buscar.js) usa la misma capa.
+   3. La ficha de cada pieza vive en js/ficha.js.
+   4. Contacto: panel verde con las hojas de Inluna, olas y azulejos.
    Cada pieza tiene una animación de uso: vapor, balanceo, giro…
    ================================================================== */
 (function () {
@@ -14,10 +15,7 @@
   const I = window.Inluna, A = window.Arte, E = window.Escenas, D = window.Datos, S = window.Sonido, Tintas = window.Tintas;
   const { $, $$, esc, espera, reducido, estado } = I;
 
-  const g = {
-    construido: false, arcada: null, nichos: [], idx: 0, raf: 0,
-    col: null, lista: [], pieza: null, origenNicho: null, origenPieza: null,
-  };
+  const g = { construido: false, arcada: null, nichos: [], idx: 0, raf: 0, col: null, origenNicho: null };
 
   /* Animaciones de uso (js/animaciones.js): vapor, balanceo, giro… */
   const tipoAnimacion = window.Animaciones.tipo;
@@ -36,6 +34,14 @@
   function marcoPieza(p, ancho) {
     const tipo = tipoAnimacion(p);
     return `<span class="marco-img${tipo ? ` anim-${tipo}` : ''}">${imagenCatalogo(p, ancho)}${capaAnimacion(tipo)}</span>`;
+  }
+
+  /* Botones de la barra superior de colección / búsqueda */
+  function atajosBarra({ buscar = true } = {}) {
+    return `<span class="col-atajos">
+      ${buscar ? `<a class="boton-icono" href="#buscar" aria-label="Buscar piezas">${A.ICONOS.buscar}</a>` : ''}
+      <a class="boton-icono boton-seleccion-barra" href="#seleccion" aria-label="Mi selección">${A.ICONOS.corazon}<span class="insignia" data-cuenta-seleccion hidden></span></a>
+    </span>`;
   }
 
   /* ================================================================
@@ -57,29 +63,32 @@
 
   function render() {
     const t = $('#taller'), a = estado.ajustes;
-    $('.t-cabecera', t).innerHTML = `<p class="t-antes">${esc(a.antesDelNombre)}</p><h1 class="t-nombre">${esc(a.nombre)}</h1>`;
+    $('.t-cabecera', t).innerHTML = `<p class="t-antes">${esc(a.antesDelNombre)}</p><h1 class="t-nombre">${esc(a.nombre)}</h1>
+      <a class="t-sobre" href="#sobre">conoce el taller <span aria-hidden="true">›</span></a>`;
     const cols = estado.categorias;
     if (!cols.length) {
       g.arcada.innerHTML = '<p class="galeria-vacia">Pronto habrá piezas nuevas en el taller.</p>';
       g.nichos = [];
       $('.puntos', t).innerHTML = '';
     } else {
-      g.arcada.innerHTML = cols.map((c, i) => (i ? `<span class="pilar" aria-hidden="true">${E.pilar()}</span>` : '') + nichoHTML(c)).join('');
+      g.arcada.innerHTML = cols.map((c, i) => (i ? `<span class="pilar" aria-hidden="true">${E.pilar()}</span>` : '') + nichoHTML(c, i, cols.length)).join('');
       g.nichos = $$('.nicho-caja', g.arcada);
       $('.puntos', t).innerHTML = cols.map((c, i) => `<button type="button" data-ir="${i}" aria-label="Ir a ${esc(c.nombre)}"></button>`).join('');
     }
     $('.t-contacto', t).innerHTML = barraContacto();
     $('.galeria-pista', t).hidden = cols.length < 2;
+    $$('.galeria-flecha', t).forEach((b) => { b.hidden = cols.length < 2; });
     I.prepararImagenes(g.arcada);
+    window.Seleccion.pintarMarcas(t);
     g.idx = -1;
     requestAnimationFrame(() => { centrar(Math.min(g.idxGuardado || 0, Math.max(0, g.nichos.length - 1)), true); enfocar(); });
   }
 
-  function nichoHTML(c) {
+  function nichoHTML(c, i, total) {
     const cuerpo = c.pieza ? marcoPieza(c.pieza, 720) : `<span class="marco-img anim-brillo">${I.imagen(c.patron, c.nombre, 720)}${capaAnimacion('brillo')}</span>`;
     const sello = c.especial === 'favoritas' ? '<span class="nicho-sello">✦ favoritas</span>' : c.especial === 'todas' ? '<span class="nicho-sello">todo el taller</span>' : '';
     return `<div class="nicho-caja" role="listitem">
-      <button class="nicho${c.especial ? ' especial' : ''}" type="button" data-slug="${esc(c.slug)}" aria-label="${esc(c.nombre)}, ${I.cuantas(c.total)}">
+      <button class="nicho${c.especial ? ' especial' : ''}" type="button" data-slug="${esc(c.slug)}" aria-label="${esc(c.nombre)}, ${I.cuantas(c.total)} (${i + 1} de ${total})">
         <span class="nicho-marco">${cuerpo}${A.marcoArco()}${sello}<span class="nicho-luz" aria-hidden="true"></span></span>
         <span class="nicho-sombra" aria-hidden="true"></span>
         <span class="nicho-placa"><span class="nicho-nombre">${esc(c.nombre)}</span><span class="nicho-cuenta">${I.cuantas(c.total)}</span></span>
@@ -87,11 +96,11 @@
     </div>`;
   }
 
+  // abajo: buscar · hacer un pedido · mi selección
   function barraContacto() {
-    const ig = I.enlaceInstagram(), wa = I.enlaceWhatsApp();
-    const igB = ig ? `<a class="boton-icono" href="${ig}" target="_blank" rel="noopener" aria-label="Instagram">${A.ICONOS.instagram}</a>` : '<span class="boton-hueco"></span>';
-    const waB = wa || D.modoPrueba ? `<a class="boton-icono" href="${wa || '#'}" target="_blank" rel="noopener" data-wa aria-label="WhatsApp">${A.ICONOS.whatsapp}</a>` : '<span class="boton-hueco"></span>';
-    return `${igB}<a class="boton boton-tinta boton-pedido" href="#contacto"><svg class="icono" viewBox="0 0 20 20" aria-hidden="true"><path d="${A.destello(10, 10, 8.5, 0.2)}" fill="currentColor"/></svg><span>Hacer un pedido</span></a>${waB}`;
+    return `<a class="boton-icono boton-barra" href="#buscar" aria-label="Buscar piezas">${A.ICONOS.buscar}<span class="boton-barra-texto">buscar</span></a>
+      <a class="boton boton-tinta boton-pedido" href="#contacto"><svg class="icono" viewBox="0 0 20 20" aria-hidden="true"><path d="${A.destello(10, 10, 8.5, 0.2)}" fill="currentColor"/></svg><span>Hacer un pedido</span></a>
+      <a class="boton-icono boton-barra boton-seleccion-barra" href="#seleccion" aria-label="Mi selección">${A.ICONOS.corazon}<span class="boton-barra-texto">mi selección</span><span class="insignia" data-cuenta-seleccion hidden></span></a>`;
   }
 
   /* Enfoque del arco central + profundidad del fondo */
@@ -117,7 +126,13 @@
       if (g.idx >= 0) S.toque();
       g.idx = mejor;
       g.idxGuardado = mejor;
-      $$('#taller .puntos button').forEach((b, i) => b.classList.toggle('activo', i === mejor));
+      $$('#taller .puntos button').forEach((b, i) => {
+        b.classList.toggle('activo', i === mejor);
+        if (i === mejor) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
+      });
+      const t = $('#taller');
+      $('.galeria-flecha.anterior', t).disabled = mejor <= 0;
+      $('.galeria-flecha.siguiente', t).disabled = mejor >= g.nichos.length - 1;
     }
     const max = arc.scrollWidth - arc.clientWidth;
     const off = 0.5 - (max > 0 ? arc.scrollLeft / max : 0.5);
@@ -133,6 +148,13 @@
     const izq = caja.offsetLeft + caja.offsetWidth / 2 - g.arcada.clientWidth / 2;
     g.arcada.scrollTo({ left: izq, behavior: instantaneo || reducido ? 'auto' : 'smooth' });
   }
+  const mover = (delta) => centrar(Math.max(0, Math.min(g.nichos.length - 1, g.idx + delta)));
+  function abrirNicho(n) {
+    I.vibrar(8);
+    S.tintineo(g.nichos.indexOf(n.parentElement) + 2);
+    g.origenNicho = n;
+    I.navegar(`c/${n.dataset.slug}`);
+  }
 
   function conectarGaleria() {
     const t = $('#taller'), arc = g.arcada;
@@ -146,18 +168,11 @@
       if (!n) return;
       const i = g.nichos.indexOf(n.parentElement);
       if (i !== g.idx) { centrar(i); return; }
-      I.vibrar(8);
-      S.tintineo(i + 2);
-      g.origenNicho = n;
-      I.navegar(`c/${n.dataset.slug}`);
-    });
-    arc.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowRight') { e.preventDefault(); centrar(Math.min(g.nichos.length - 1, g.idx + 1)); }
-      if (e.key === 'ArrowLeft') { e.preventDefault(); centrar(Math.max(0, g.idx - 1)); }
+      abrirNicho(n);
     });
     $('.puntos', t).addEventListener('click', (e) => { const b = e.target.closest('[data-ir]'); if (b) centrar(Number(b.dataset.ir)); });
-    $('.galeria-flecha.anterior', t).addEventListener('click', () => centrar(Math.max(0, g.idx - 1)));
-    $('.galeria-flecha.siguiente', t).addEventListener('click', () => centrar(Math.min(g.nichos.length - 1, g.idx + 1)));
+    $('.galeria-flecha.anterior', t).addEventListener('click', () => mover(-1));
+    $('.galeria-flecha.siguiente', t).addEventListener('click', () => mover(1));
     $('.t-lamparas', t).addEventListener('click', (e) => {
       const b = e.target.closest('.t-lampara');
       if (!b) return;
@@ -174,27 +189,57 @@
     });
   }
 
+  /* Teclado en el taller: ← → recorren los arcos, Enter abre el del
+     centro, Inicio/Fin van a los extremos y «/» abre el buscador */
+  document.addEventListener('keydown', (e) => {
+    const t = $('#taller');
+    if (!t || t.hidden || e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
+    if ($$('dialog[open]').length || !$('#coleccion').hidden || !$('#entrada').hidden) return;
+    if (e.target.closest('input, textarea, select, [contenteditable]')) return;
+    const enBoton = !!e.target.closest('a, button'); // (ahí Enter hace lo de siempre)
+    if (e.key === 'ArrowRight') { e.preventDefault(); mover(1); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); mover(-1); }
+    else if (e.key === 'Home') { e.preventDefault(); centrar(0); }
+    else if (e.key === 'End') { e.preventDefault(); centrar(g.nichos.length - 1); }
+    else if (e.key === '/') { e.preventDefault(); I.navegar('buscar'); }
+    else if ((e.key === 'Enter' || e.key === ' ') && !enBoton) {
+      const n = g.nichos[g.idx] && g.nichos[g.idx].firstElementChild;
+      if (n) { e.preventDefault(); abrirNicho(n); }
+    }
+  });
+
   /* ================================================================
-     2 · COLECCIÓN
+     2 · COLECCIÓN (y la capa del buscador)
      ================================================================ */
   function tarjetaHTML(p, i) {
     const r = A.azar(`t-${p.id}`);
     const pr = I.precio(p);
     const sello = p.estado === 'agotado' ? '<span class="sello agotado">agotado</span>'
       : p.estado === 'encargo' ? '<span class="sello">sobre pedido</span>' : '';
-    return `<a class="tarjeta${p.estado === 'agotado' ? ' agotada' : ''}" href="#p/${encodeURIComponent(p.id)}" data-id="${esc(p.id)}" style="--i:${i};--fd:${(3 + r() * 1.4).toFixed(2)}s;--fdel:-${(r() * 3).toFixed(2)}s">
-      <span class="tarjeta-flota"><span class="marco">${marcoPieza(p, 560)}${A.marcoArco()}${sello}</span></span>
-      <span class="tarjeta-sombra" aria-hidden="true"></span>
-      <span class="tarjeta-etiqueta"><span class="tarjeta-nombre">${esc(p.nombre)}</span><span class="tarjeta-precio">${pr ? esc(pr) : '&nbsp;'}</span></span>
-    </a>`;
+    return `<div class="tarjeta-caja" style="--i:${Math.min(i, 12)};--fd:${(3 + r() * 1.4).toFixed(2)}s">
+      <a class="tarjeta${p.estado === 'agotado' ? ' agotada' : ''}" href="#p/${encodeURIComponent(p.id)}" data-id="${esc(p.id)}">
+        <span class="tarjeta-flota"><span class="marco">${marcoPieza(p, 560)}${A.marcoArco()}${sello}</span></span>
+        <span class="tarjeta-sombra" aria-hidden="true"></span>
+        <span class="tarjeta-etiqueta"><span class="tarjeta-nombre">${esc(p.nombre)}</span><span class="tarjeta-precio">${pr ? esc(pr) : '&nbsp;'}</span></span>
+      </a>
+      ${window.Seleccion.corazonHTML(p)}
+    </div>`;
+  }
+
+  /* Solo se mueven las tarjetas que se ven (ahorra batería y memoria) */
+  const visibles = 'IntersectionObserver' in window ? new IntersectionObserver((entradas) => {
+    entradas.forEach((en) => en.target.classList.toggle('en-vista', en.isIntersecting));
+  }, { rootMargin: '120px 0px' }) : null;
+  function observarTarjetas(raiz) {
+    $$('.tarjeta-caja', raiz).forEach((el) => { if (visibles) visibles.observe(el); else el.classList.add('en-vista'); });
   }
 
   function coleccionHTML(c) {
     return `<div class="col-scroll">
       <header class="col-barra">
-        <a class="volver" href="#" data-volver>${A.ICONOS.volver}<span>Taller</span></a>
+        <a class="volver" href="#taller" data-volver>${A.ICONOS.volver}<span>Taller</span></a>
         <span class="col-marca" aria-hidden="true">${A.logo()}</span>
-        <span class="col-hueco"></span>
+        ${atajosBarra()}
       </header>
       <div class="col-cabecera">
         <p class="col-antes">${c.especial ? 'del taller' : 'colección'}</p>
@@ -214,40 +259,67 @@
     return `inset(${r.top.toFixed(1)}px ${(window.innerWidth - r.right).toFixed(1)}px ${(window.innerHeight - r.bottom).toFixed(1)}px ${r.left.toFixed(1)}px round ${rad.toFixed(1)}px ${rad.toFixed(1)}px 8px 8px)`;
   }
 
+  // la capa (colección o búsqueda) entra y tapa el taller
+  function abrirCapa(origen) {
+    const col = $('#coleccion');
+    col.hidden = false;
+    document.documentElement.classList.add('con-capa');
+    const t = $('#taller');
+    t.classList.add('atras');
+    $('.col-scroll', col).scrollTop = 0;
+    let anim;
+    if (origen && !reducido) anim = col.animate([{ clipPath: recorteArco(origen) }, { clipPath: rectoCompleto }], { duration: 560, easing: 'cubic-bezier(.7,0,.2,1)' });
+    else anim = col.animate([{ opacity: 0, transform: 'translateY(16px)' }, { opacity: 1, transform: 'none' }], { duration: reducido ? 1 : 260, easing: 'ease-out' });
+    anim.finished.then(() => { if (!col.hidden) t.classList.add('tapado'); }).catch(() => {});
+  }
+
+  function pintarColeccion(c) {
+    const col = $('#coleccion');
+    col.innerHTML = coleccionHTML(c);
+    col.setAttribute('aria-labelledby', 'col-titulo');
+    I.prepararImagenes(col);
+    window.Seleccion.pintarMarcas(col);
+    observarTarjetas(col);
+  }
+
   function mostrarColeccion(slug) {
     const c = estado.categorias.find((x) => x.slug === slug);
     if (!c) return false;
     const col = $('#coleccion');
     const yaAbierta = !col.hidden;
     if (g.col !== slug || !col.innerHTML) {
-      col.innerHTML = coleccionHTML(c);
-      I.prepararImagenes(col);
+      pintarColeccion(c);
       const chip = $('.chip.activo', col);
       if (chip) chip.scrollIntoView({ block: 'nearest', inline: 'center' });
       if (yaAbierta) $('.col-scroll', col).scrollTop = 0;
     }
     g.col = slug;
-    g.lista = c.productos.map((p) => p.id);
+    window.Ficha.ponerLista(c.productos.map((p) => p.id), { ruta: `c/${encodeURIComponent(slug)}`, nombre: c.nombre });
     if (!yaAbierta) {
       const origen = g.origenNicho && $('.nicho-marco', g.origenNicho);
       g.origenNicho = null;
-      col.hidden = false;
-      $('#taller').classList.add('atras');
-      $('.col-scroll', col).scrollTop = 0;
-      if (origen && !reducido) {
-        col.animate([{ clipPath: recorteArco(origen) }, { clipPath: rectoCompleto }], { duration: 560, easing: 'cubic-bezier(.7,0,.2,1)' });
-      } else {
-        col.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220 });
-      }
+      abrirCapa(origen);
     }
     return true;
+  }
+
+  function mostrarBusqueda() {
+    const col = $('#coleccion');
+    const yaAbierta = !col.hidden;
+    if (g.col !== 'buscar' || !col.innerHTML) window.Buscar.mostrar({ enfocar: !yaAbierta });
+    else window.Buscar.resultados();
+    g.col = 'buscar';
+    col.setAttribute('aria-labelledby', 'col-titulo');
+    if (!yaAbierta) abrirCapa(null);
   }
 
   async function cerrarColeccion() {
     const col = $('#coleccion');
     if (col.hidden) return;
     const i = estado.categorias.findIndex((x) => x.slug === g.col);
-    $('#taller').classList.remove('atras');
+    const t = $('#taller');
+    t.classList.remove('tapado', 'atras');
+    document.documentElement.classList.remove('con-capa');
     const caja = g.nichos[i];
     try {
       if (caja && !reducido) {
@@ -255,7 +327,7 @@
         enfocar();
         await col.animate([{ clipPath: rectoCompleto }, { clipPath: recorteArco($('.nicho-marco', caja)) }], { duration: 460, easing: 'cubic-bezier(.7,0,.2,1)', fill: 'forwards' }).finished;
       } else {
-        await col.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, fill: 'forwards' }).finished;
+        await col.animate([{ opacity: 1 }, { opacity: 0 }], { duration: reducido ? 1 : 200, fill: 'forwards' }).finished;
       }
     } catch (e) { /* animación cancelada */ }
     col.hidden = true;
@@ -265,146 +337,7 @@
   }
 
   /* ================================================================
-     3 · PIEZA (ficha inmersiva con la foto original)
-     ================================================================ */
-  const dlg = $('#ficha');
-
-  function fichaHTML(p) {
-    const fotos = p.fotos.length ? p.fotos : [''];
-    const pr = I.precio(p);
-    const pos = g.lista.indexOf(p.id);
-    const total = g.lista.length;
-    const pedir = p.estado === 'agotado' ? 'Preguntar por WhatsApp' : p.estado === 'encargo' ? 'Encargar por WhatsApp' : 'Pedir por WhatsApp';
-    const nav = total > 1 && pos >= 0
-      ? `<button class="boton-icono" type="button" data-anterior aria-label="Pieza anterior">${A.ICONOS.volver}</button><span class="ficha-pos">${pos + 1} / ${total}</span><button class="boton-icono girado" type="button" data-siguiente aria-label="Pieza siguiente">${A.ICONOS.volver}</button>`
-      : '';
-    return `<div class="ficha-escena">
-      <header class="ficha-barra"><div class="ficha-nav">${nav}</div><button class="boton-icono ficha-cerrar" type="button" data-cerrar aria-label="Cerrar">${A.ICONOS.cerrar}</button></header>
-      <div class="ficha-cuerpo">
-        <div class="vitrina">
-          <div class="vitrina-marco">
-            <div class="vitrina-fotos" tabindex="0" aria-label="Fotos de ${esc(p.nombre)}">${fotos.map((f, i) =>
-              `<figure class="vitrina-foto">${I.imagen(f, `${p.nombre} · foto ${i + 1}`, 1400, { perezosa: i > 0 })}</figure>`).join('')}</div>
-            <span class="vitrina-brillo" aria-hidden="true"></span>
-          </div>
-          ${fotos.length > 1 ? `<div class="vitrina-puntos">${fotos.map((_, i) => `<button type="button" data-foto="${i}" aria-label="Ver foto ${i + 1}"${i ? '' : ' class="activo"'}></button>`).join('')}</div>` : ''}
-          <span class="vitrina-sombra" aria-hidden="true"></span>
-        </div>
-        <div class="ficha-info">
-          ${p.categoria ? `<p class="ficha-cat">${esc(p.categoria)}</p>` : ''}
-          <h2 class="ficha-nombre" id="ficha-nombre">${esc(p.nombre)}</h2>
-          <div class="ficha-precio-fila">${pr ? `<span class="ficha-precio">${esc(pr)}</span>` : ''}<span class="estado ${p.estado}">${I.textoEstado(p)}</span></div>
-          ${p.descripcion ? `<p class="ficha-desc">${esc(p.descripcion)}</p>` : ''}
-          <div class="ficha-acciones">
-            <a class="boton boton-tinta" href="${esc(I.enlaceWhatsApp(p) || '#')}" target="_blank" rel="noopener" data-wa>${A.ICONOS.whatsapp}<span>${pedir}</span></a>
-            <div class="ficha-acciones-fila">
-              ${I.mensajeInstagram() ? `<a class="boton" href="${I.mensajeInstagram()}" target="_blank" rel="noopener">${A.ICONOS.instagram}<span>Mensaje</span></a>` : ''}
-              <button class="boton" type="button" data-compartir>${A.ICONOS.compartir}<span>Compartir</span></button>
-            </div>
-          </div>
-          <p class="ficha-nota">✦ Hecho a mano: cada pieza puede variar un poquito.</p>
-        </div>
-      </div>
-    </div>`;
-  }
-
-  function abrirPieza(p, { direccion = 0 } = {}) {
-    const primera = !dlg.open;
-    const origen = g.origenPieza;
-    g.origenPieza = null;
-    if (g.lista.indexOf(p.id) < 0) g.lista = [p.id];
-    g.pieza = p;
-    dlg.innerHTML = fichaHTML(p);
-    I.prepararImagenes(dlg);
-    const fotos = $('.vitrina-fotos', dlg), puntos = $$('.vitrina-puntos button', dlg);
-    if (fotos && puntos.length) {
-      fotos.addEventListener('scroll', () => {
-        const i = Math.round(fotos.scrollLeft / Math.max(1, fotos.clientWidth));
-        puntos.forEach((b, k) => b.classList.toggle('activo', k === i));
-      }, { passive: true });
-    }
-    if (primera) {
-      document.documentElement.classList.add('sin-scroll');
-      dlg.showModal();
-    }
-    const marco = $('.vitrina-marco', dlg);
-    if (reducido) return;
-    if (primera && origen) {
-      const a = origen.getBoundingClientRect(), b = marco.getBoundingClientRect();
-      const s = a.width / b.width;
-      marco.animate([
-        { transform: `translate(${(a.left + a.width / 2 - (b.left + b.width / 2)).toFixed(1)}px,${(a.top + a.height / 2 - (b.top + b.height / 2)).toFixed(1)}px) scale(${s.toFixed(3)})`, borderRadius: `${(b.width / 2).toFixed(0)}px ${(b.width / 2).toFixed(0)}px 12px 12px` },
-        { transform: 'none', borderRadius: '22px' },
-      ], { duration: 480, easing: 'cubic-bezier(.2,.8,.2,1)' });
-      $('.ficha-info', dlg).animate([{ opacity: 0, transform: 'translateY(24px)' }, { opacity: 1, transform: 'none' }], { duration: 420, delay: 120, easing: 'ease-out', fill: 'backwards' });
-    } else if (direccion) {
-      $('.vitrina', dlg).animate([{ opacity: 0, transform: `translateX(${direccion * 48}px)` }, { opacity: 1, transform: 'none' }], { duration: 300, easing: 'cubic-bezier(.2,.8,.2,1)' });
-      $('.ficha-info', dlg).animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300 });
-    } else if (primera) {
-      $('.ficha-escena', dlg).animate([{ opacity: 0, transform: 'translateY(30px)' }, { opacity: 1, transform: 'none' }], { duration: 320, easing: 'ease-out' });
-    }
-  }
-
-  async function cerrarPieza() {
-    if (!dlg.open || dlg.classList.contains('cerrando')) return;
-    dlg.classList.add('cerrando');
-    await espera(reducido ? 0 : 200);
-    dlg.close();
-    dlg.classList.remove('cerrando');
-    document.documentElement.classList.remove('sin-scroll');
-    g.pieza = null;
-  }
-
-  function siguientePieza(delta) {
-    if (!g.pieza || g.lista.length < 2) return;
-    const i = g.lista.indexOf(g.pieza.id);
-    const id = g.lista[(i + delta + g.lista.length) % g.lista.length];
-    g.direccion = delta;
-    I.navegar(`p/${id}`, { reemplazar: true });
-    S.toque();
-  }
-
-  dlg.addEventListener('cancel', (e) => { e.preventDefault(); I.cerrarPiezaRuta(); });
-  dlg.addEventListener('click', (e) => {
-    const t = e.target;
-    if (t === dlg || t.closest('[data-cerrar]')) { I.cerrarPiezaRuta(); return; }
-    if (t.closest('[data-anterior]')) { siguientePieza(-1); return; }
-    if (t.closest('[data-siguiente]')) { siguientePieza(1); return; }
-    if (t.closest('[data-compartir]') && g.pieza) { I.compartir(g.pieza); return; }
-    const punto = t.closest('[data-foto]');
-    if (punto) {
-      const f = $('.vitrina-fotos', dlg);
-      f.scrollTo({ left: Number(punto.dataset.foto) * f.clientWidth, behavior: reducido ? 'auto' : 'smooth' });
-    }
-  });
-  dlg.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowRight' && !e.target.closest('.vitrina-fotos')) siguientePieza(1);
-    if (e.key === 'ArrowLeft' && !e.target.closest('.vitrina-fotos')) siguientePieza(-1);
-  });
-  // la vitrina se inclina con el mouse (y con el teléfono en Android)
-  dlg.addEventListener('pointermove', (e) => {
-    if (e.pointerType !== 'mouse' || reducido) return;
-    const m = $('.vitrina-marco', dlg);
-    if (!m) return;
-    const r = m.getBoundingClientRect();
-    const x = Math.max(-0.6, Math.min(0.6, (e.clientX - r.left) / r.width - 0.5));
-    const y = Math.max(-0.6, Math.min(0.6, (e.clientY - r.top) / r.height - 0.5));
-    m.style.transform = `perspective(1000px) rotateY(${(x * 12).toFixed(2)}deg) rotateX(${(-y * 9).toFixed(2)}deg)`;
-    m.style.setProperty('--bx', `${((x + 0.5) * 100).toFixed(1)}%`);
-    m.style.setProperty('--by', `${((y + 0.5) * 100).toFixed(1)}%`);
-  });
-  window.addEventListener('deviceorientation', (e) => {
-    if (!dlg.open || e.gamma == null || reducido) return;
-    const m = $('.vitrina-marco', dlg);
-    if (!m) return;
-    const x = Math.max(-1, Math.min(1, e.gamma / 25)), y = Math.max(-1, Math.min(1, (e.beta - 45) / 30));
-    m.style.transform = `perspective(1000px) rotateY(${(x * 7).toFixed(2)}deg) rotateX(${(-y * 5).toFixed(2)}deg)`;
-    m.style.setProperty('--bx', `${((x + 1) * 50).toFixed(1)}%`);
-    m.style.setProperty('--by', `${((y + 1) * 50).toFixed(1)}%`);
-  });
-
-  /* ================================================================
-     4 · CONTACTO (panel verde con la luna de Inluna, olas y azulejos)
+     4 · CONTACTO (panel verde con las hojas de Inluna, olas y azulejos)
      ================================================================ */
   function panelContacto() {
     const a = estado.ajustes, wa = I.enlaceWhatsApp(), ig = I.enlaceInstagram();
@@ -423,8 +356,10 @@
         <p class="contacto-texto">Escríbeme para pedidos, encargos o piezas personalizadas. Te respondo en cuanto salga del taller.</p>
         <div class="contacto-botones">
           ${wa || D.modoPrueba ? `<a class="boton boton-luna" href="${wa || '#'}" target="_blank" rel="noopener" data-wa>${A.ICONOS.whatsapp}<span>WhatsApp</span></a>` : ''}
+          <a class="boton boton-luna-borde" href="#cotizar">${A.ICONOS.mensaje}<span>Cotizar un encargo</span></a>
           ${ig ? `<a class="boton boton-luna-borde" href="${ig}" target="_blank" rel="noopener">${A.ICONOS.instagram}<span>@${esc(a.instagram)}</span></a>` : ''}
         </div>
+        <p class="contacto-mas"><a href="#seleccion">${A.ICONOS.corazon}<span>mi selección</span></a><span aria-hidden="true">·</span><a href="#sobre">${A.ICONOS.hoja}<span>conoce el taller</span></a></p>
         <div class="contacto-olas" aria-hidden="true" style="background-image:url(&quot;${A.aUri(olasSVG())}&quot;)"></div>
       </div>
       <div class="contacto-azulejos" aria-hidden="true">${azulejos}</div>
@@ -447,8 +382,8 @@
   function abrirContacto() {
     if (dlgContacto.open) return;
     dlgContacto.innerHTML = `<div class="hoja-contacto"><button class="boton-icono contacto-cerrar" type="button" data-cerrar aria-label="Cerrar">${A.ICONOS.cerrar}</button>${panelContacto()}</div>`;
-    document.documentElement.classList.add('sin-scroll');
     dlgContacto.showModal();
+    I.actualizarScroll();
   }
   async function cerrarContacto() {
     if (!dlgContacto.open) return;
@@ -456,7 +391,7 @@
     await espera(reducido ? 0 : 200);
     dlgContacto.close();
     dlgContacto.classList.remove('cerrando');
-    if (!dlg.open) document.documentElement.classList.remove('sin-scroll');
+    I.actualizarScroll();
   }
   dlgContacto.addEventListener('cancel', (e) => { e.preventDefault(); I.volver(); });
   dlgContacto.addEventListener('click', (e) => {
@@ -465,9 +400,10 @@
 
   /* Al salir del taller: todo se cierra al instante (la fachada lo tapa) */
   function cerrarDialogos() {
-    if (dlg.open) { dlg.close(); dlg.classList.remove('cerrando'); g.pieza = null; }
+    window.Ficha.cerrarYa();
+    [window.Seleccion, window.Cotizar, window.Sobre].forEach((m) => m.cerrarYa());
     if (dlgContacto.open) { dlgContacto.close(); dlgContacto.classList.remove('cerrando'); }
-    document.documentElement.classList.remove('sin-scroll');
+    I.actualizarScroll();
   }
   function cerrarTodo() {
     cerrarDialogos();
@@ -476,37 +412,31 @@
     col.hidden = true;
     col.innerHTML = '';
     g.col = null;
-    $('#taller').classList.remove('atras');
+    $('#taller').classList.remove('atras', 'tapado');
+    document.documentElement.classList.remove('con-capa');
   }
-
-  // recordar la tarjeta tocada (para que la pieza "vuele" desde ahí)
-  document.addEventListener('click', (e) => {
-    const t = e.target.closest('.tarjeta');
-    if (t) g.origenPieza = $('.marco', t);
-  }, true);
 
   /* Llegaron datos nuevos: repinta sin perder el lugar */
   function refrescar() {
     render();
     const col = $('#coleccion');
-    const c = g.col && estado.categorias.find((x) => x.slug === g.col);
-    if (c && !col.hidden) {
-      const sc = $('.col-scroll', col);
-      const y = sc ? sc.scrollTop : 0;
-      col.innerHTML = coleccionHTML(c);
-      I.prepararImagenes(col);
-      $('.col-scroll', col).scrollTop = y;
-      g.lista = c.productos.map((p) => p.id);
-    }
+    if (col.hidden || !g.col) return;
+    const sc = $('.col-scroll', col);
+    const y = sc ? sc.scrollTop : 0;
+    if (g.col === 'buscar') { window.Buscar.resultados(); return; }
+    const c = estado.categorias.find((x) => x.slug === g.col);
+    if (!c) return;
+    pintarColeccion(c);
+    $('.col-scroll', col).scrollTop = y;
+    window.Ficha.ponerLista(c.productos.map((p) => p.id));
   }
 
   window.Taller = {
-    construir, render, refrescar, mostrarColeccion, cerrarColeccion, abrirPieza, cerrarPieza, abrirContacto, cerrarContacto,
-    cerrarDialogos, cerrarTodo,
+    construir, render, refrescar, mostrarColeccion, mostrarBusqueda, cerrarColeccion, abrirContacto, cerrarContacto,
+    cerrarDialogos, cerrarTodo, imagenCatalogo, marcoPieza, tarjetaHTML, observarTarjetas, atajosBarra,
     coleccionAbierta: () => !$('#coleccion').hidden,
     coleccionActual: () => g.col,
-    piezaAbierta: () => dlg.open,
-    direccion() { const d = g.direccion || 0; g.direccion = 0; return d; },
+    rutaLista: () => (g.col === 'buscar' ? 'buscar' : g.col ? `c/${g.col}` : 'taller'),
     tipoAnimacion,
   };
 })();

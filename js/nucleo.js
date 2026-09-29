@@ -17,6 +17,44 @@
     listo: false, productos: [], ajustes: D.mezclarAjustes({}), categorias: [], fuente: '',
   };
 
+  /* ---------- modo ligero: en teléfonos modestos se apagan los adornos
+     que se mueven sin parar (el catálogo se ve igual, pero quieto) ---------- */
+  const ligero = { activo: false, avisar: [] };
+  function activarLigero() {
+    if (ligero.activo) return;
+    ligero.activo = true;
+    document.documentElement.classList.add('ligero');
+    ligero.avisar.forEach((fn) => { try { fn(); } catch (e) { /* nada */ } });
+  }
+  (function () {
+    try {
+      const q = location.search;
+      if (/[?&]completo\b/.test(q)) return;
+      const mem = navigator.deviceMemory || 8, nucleos = navigator.hardwareConcurrency || 8;
+      const ahorro = navigator.connection && navigator.connection.saveData;
+      if (/[?&]ligero\b/.test(q) || reducido || ahorro || mem <= 2 || nucleos <= 2 || (mem <= 4 && nucleos <= 4)) activarLigero();
+    } catch (e) { /* nada */ }
+  })();
+  /* Mide unos segundos si las animaciones van fluidas; si no, pasa a ligero */
+  function medirFluidez(ms = 1600) {
+    if (ligero.activo || reducido || /[?&]completo\b/.test(location.search)) return;
+    const tiempos = [];
+    let previo = 0, fin = 0;
+    const paso = (t) => {
+      if (document.visibilityState !== 'visible') return;
+      if (previo) tiempos.push(t - previo);
+      previo = t;
+      if (!fin) fin = t + ms;
+      if (t < fin) { requestAnimationFrame(paso); return; }
+      if (tiempos.length < 10) return;
+      const orden = tiempos.slice().sort((a, b) => a - b);
+      const mediana = orden[Math.floor(orden.length / 2)], lentos = tiempos.filter((x) => x > 50).length / tiempos.length;
+      if (mediana > 26 || lentos > 0.25) activarLigero();
+    };
+    requestAnimationFrame(paso);
+  }
+  const alPasarALigero = (fn) => { if (ligero.activo) fn(); else ligero.avisar.push(fn); };
+
   /* ---------- colores de config.js → variables CSS ---------- */
   (function () {
     const c = CFG.colores || {}, st = document.documentElement.style;
@@ -85,15 +123,35 @@
   }, true);
 
   /* ---------- enlaces ---------- */
-  const enlacePieza = (p) => `${location.origin}${location.pathname}#p/${encodeURIComponent(p.id)}`;
-  function enlaceWhatsApp(p) {
+  // En GitHub Pages cada pieza tiene su propia página para compartir (p/<id>/,
+  // con su foto y su nombre en la vista previa); si aún no existe, 404.html
+  // lleva a la pieza igual. En otros lugares se usa el enlace con #.
+  const conFichas = /\.github\.io$/i.test(location.hostname);
+  const baseSitio = () => location.origin + location.pathname.replace(/[^/]*$/, '');
+  const enlacePieza = (p) => (conFichas
+    ? `${baseSitio()}p/${encodeURIComponent(p.id)}/`
+    : `${location.origin}${location.pathname}#p/${encodeURIComponent(p.id)}`);
+
+  /* Variantes elegidas: { talla, color, material } → "Talla: M · Color: Negro" */
+  const VARIANTES = [['tallas', 'talla', 'Talla'], ['colores', 'color', 'Color'], ['materiales', 'material', 'Material']];
+  function textoVariantes(v) {
+    return VARIANTES.filter(([, k]) => v && v[k]).map(([, k, etiqueta]) => `${etiqueta}: ${v[k]}`).join(' · ');
+  }
+  const enlaceWhatsAppTexto = (texto) => (estado.ajustes.whatsapp
+    ? `https://wa.me/${estado.ajustes.whatsapp}${texto ? `?text=${encodeURIComponent(texto)}` : ''}` : '');
+
+  function mensajePieza(p, { variantes, cantidad } = {}) {
     const a = estado.ajustes;
-    if (!a.whatsapp) return '';
-    if (!p) return `https://wa.me/${a.whatsapp}`;
-    const msg = (a.mensajeWhatsApp || CFG.mensajeWhatsApp || '{pieza} {enlace}')
+    let msg = (a.mensajeWhatsApp || CFG.mensajeWhatsApp || '{pieza} {enlace}')
       .replace(/\{pieza\}/g, p.nombre).replace(/\{precio\}/g, precio(p)).replace(/\{enlace\}/g, enlacePieza(p))
       .replace(/\s*\(\s*\)/g, '');
-    return `https://wa.me/${a.whatsapp}?text=${encodeURIComponent(msg)}`;
+    const extra = [textoVariantes(variantes), cantidad > 1 ? `Cantidad: ${cantidad}` : ''].filter(Boolean);
+    if (extra.length) msg += `\n${extra.join('\n')}`;
+    return msg;
+  }
+  function enlaceWhatsApp(p, opciones) {
+    if (!estado.ajustes.whatsapp) return '';
+    return p ? enlaceWhatsAppTexto(mensajePieza(p, opciones)) : enlaceWhatsAppTexto('');
   }
   const enlaceInstagram = () => (estado.ajustes.instagram ? `https://instagram.com/${encodeURIComponent(estado.ajustes.instagram)}` : '');
   const mensajeInstagram = () => (estado.ajustes.instagram ? `https://ig.me/m/${encodeURIComponent(estado.ajustes.instagram)}` : '');
@@ -122,6 +180,7 @@
   let capa = null;
   function destellos(x, y, { n = 7, radio = 46, clara = false } = {}) {
     if (reducido) return;
+    if (ligero.activo) n = Math.min(4, n);
     if (!capa) { capa = document.createElement('div'); capa.className = 'destellos'; document.body.appendChild(capa); }
     for (let i = 0; i < n; i++) {
       const s = document.createElement('span');
@@ -168,10 +227,42 @@
   }
   document.addEventListener('pointerdown', () => { if (window.Sonido) window.Sonido.despertar(); }, { passive: true });
 
+  /* Con cualquier hoja abierta, la página de atrás no se desplaza */
+  function actualizarScroll() {
+    const abierta = $$('dialog.hoja-catalogo').some((d) => d.open);
+    document.documentElement.classList.toggle('sin-scroll', abierta);
+  }
+
+  /* Botón de "cantidad" (− 1 +) */
+  function contadorHTML(nombre, valor, minimo = 1, etiqueta = 'Cantidad') {
+    return `<span class="contador" data-contador data-min="${minimo}">
+      <button type="button" class="contador-boton" data-paso="-1" aria-label="Menos">−</button>
+      <input type="number" name="${nombre}" value="${valor}" min="${minimo}" max="9999" inputmode="numeric" aria-label="${esc(etiqueta)}">
+      <button type="button" class="contador-boton" data-paso="1" aria-label="Más">+</button>
+    </span>`;
+  }
+  const leerContador = (input) => {
+    const min = Number(input.min) || 1;
+    const n = Math.floor(Number(input.value));
+    return Math.max(min, Math.min(9999, isFinite(n) && n > 0 ? n : min));
+  };
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-contador] [data-paso]');
+    if (!b) return;
+    const input = b.parentElement.querySelector('input');
+    input.value = Math.max(Number(input.min) || 1, Math.min(9999, leerContador(input) + Number(b.dataset.paso)));
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    vibrar(5);
+  });
+  document.addEventListener('change', (e) => {
+    if (e.target.matches('[data-contador] input')) e.target.value = leerContador(e.target);
+  });
+
   window.Inluna = {
-    CFG, $, $$, esc, espera, reducido, puntero, estado,
+    CFG, $, $$, esc, espera, reducido, puntero, estado, ligero, activarLigero, medirFluidez, alPasarALigero,
     aplicarDatos, cuantas, precio, textoEstado,
-    imagen, prepararImagenes, enlacePieza, enlaceWhatsApp, enlaceInstagram, mensajeInstagram, compartir,
-    aviso, destellos, destellosEn, vibrar, botonSonido,
+    imagen, prepararImagenes, enlacePieza, enlaceWhatsApp, enlaceWhatsAppTexto, mensajePieza, textoVariantes, VARIANTES,
+    enlaceInstagram, mensajeInstagram, compartir,
+    aviso, destellos, destellosEn, vibrar, botonSonido, actualizarScroll, contadorHTML, leerContador,
   };
 })();

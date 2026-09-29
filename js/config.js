@@ -11,7 +11,7 @@ window.INLUNA_CONFIG = {
   // 1) URL de tu Apps Script (termina en /exec).
   //    Mientras esté vacía, el catálogo muestra piezas de ejemplo y el
   //    panel funciona en "modo de prueba" (solo guarda en ese teléfono).
-  urlScript: '',
+  urlScript: 'https://script.google.com/macros/s/AKfycbwpe0up2Mk3S_m-WP1UMzPcNnuw28ylkYkTNO3Eept3RJASHEdtdefXUwl71e8EBbhPZA/exec',
 
   // 2) Valores iniciales (el panel → Ajustes los puede sobrescribir)
   nombre: 'Inluna',

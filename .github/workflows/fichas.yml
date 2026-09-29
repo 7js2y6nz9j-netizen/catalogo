@@ -1,0 +1,57 @@
+# Robot que crea una página por pieza (p/<pieza>/) para que al compartir
+# un enlace se vea su foto, su nombre y su precio, y una copia del catálogo
+# (datos/catalogo.json) para que la página abra rápido.
+# Corre cada hora, cada vez que subes un cambio y cuando tú quieras
+# (pestaña «Actions» → «Fichas para compartir» → «Run workflow»).
+name: Fichas para compartir
+
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths-ignore: ['p/**', 'datos/**']
+
+permissions:
+  contents: write
+  pages: write
+
+concurrency:
+  group: fichas
+  cancel-in-progress: false
+
+jobs:
+  fichas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Crear las fichas
+        run: node herramientas/fichas.mjs
+
+      - name: Guardar los cambios
+        id: guardar
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A p datos
+          if git diff --cached --quiet; then
+            echo "cambios=no" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git commit -m "Fichas para compartir (automático)"
+          git pull --rebase origin main
+          git push origin HEAD:main
+          echo "cambios=si" >> "$GITHUB_OUTPUT"
+
+      - name: Publicar en GitHub Pages
+        if: steps.guardar.outputs.cambios == 'si'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${{ github.repository }}/pages/builds" || true

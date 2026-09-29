@@ -1,38 +1,38 @@
 {
-    "playeras-personalizadas":  {
-                                    "archivo":  "foto.jpg",
-                                    "ref":  "1_XekR4Qz9pLsnK8jHu1g-d0zo0E70ye1"
-                                },
-    "organizador":  {
-                        "archivo":  "foto.jpg",
-                        "ref":  "1Tq4Y_kw4YLWOWxy208ajbpccU3yKiy62"
-                    },
-    "maqueta-volumetrica":  {
-                                "archivo":  "foto.jpg",
-                                "ref":  "1iDDtyu0Kc3t-Fle2VoXYnjk575dvndSb"
-                            },
-    "tote-bag":  {
-                     "archivo":  "foto.jpg",
-                     "ref":  "17lIKHpLlF3Rg4loBUOwoY7Lgv9yPcJyJ"
-                 },
-    "playera-lux":  {
-                        "archivo":  "foto.jpg",
-                        "ref":  "1jB0RGy7UvGXdXZ54u2w4udvNdWj1Sgho"
-                    },
-    "bricks-of-a-heart":  {
-                              "archivo":  "foto.jpg",
-                              "ref":  "14LRrm7UXmYckQFun8w9ug7k-7NUT9Zez"
-                          },
-    "diseno-grafico":  {
-                           "archivo":  "foto.jpg",
-                           "ref":  "1tql_Gdr1-EwDuORxecsfrlumD_H0IhcD"
-                       },
-    "stock-para-eventos":  {
-                               "archivo":  "foto.jpg",
-                               "ref":  "1-8s_IXd5HewQZPiM8jrc3l3F4R57Ljdi"
-                           },
-    "maquetas-arquitectonicas":  {
-                                     "archivo":  "foto.jpg",
-                                     "ref":  "1x8OoPr21DH7eoz7WY_8LElfiCxsm8wqx"
-                                 }
+ "diseno-grafico": {
+  "archivo": "foto.jpg",
+  "ref": "1tql_Gdr1-EwDuORxecsfrlumD_H0IhcD"
+ },
+ "organizador": {
+  "archivo": "foto.jpg",
+  "ref": "1Tq4Y_kw4YLWOWxy208ajbpccU3yKiy62"
+ },
+ "tote-bag": {
+  "archivo": "foto.jpg",
+  "ref": "17lIKHpLlF3Rg4loBUOwoY7Lgv9yPcJyJ"
+ },
+ "playera-lux": {
+  "archivo": "foto.jpg",
+  "ref": "1jB0RGy7UvGXdXZ54u2w4udvNdWj1Sgho"
+ },
+ "bricks-of-a-heart": {
+  "archivo": "foto.jpg",
+  "ref": "14LRrm7UXmYckQFun8w9ug7k-7NUT9Zez"
+ },
+ "stock-para-eventos": {
+  "archivo": "foto.jpg",
+  "ref": "1-8s_IXd5HewQZPiM8jrc3l3F4R57Ljdi"
+ },
+ "maquetas-arquitectonicas": {
+  "archivo": "foto.jpg",
+  "ref": "1x8OoPr21DH7eoz7WY_8LElfiCxsm8wqx"
+ },
+ "maqueta-volumetrica": {
+  "archivo": "foto.jpg",
+  "ref": "1iDDtyu0Kc3t-Fle2VoXYnjk575dvndSb"
+ },
+ "playeras-personalizadas": {
+  "archivo": "foto.jpg",
+  "ref": "1_XekR4Qz9pLsnK8jHu1g-d0zo0E70ye1"
+ }
 }

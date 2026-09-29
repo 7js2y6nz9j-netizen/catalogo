@@ -274,3 +274,72 @@ body.admin { min-height: 100svh; }
 .confirmar-texto { margin: 0; font-size: 16px; line-height: 1.5; }
 .confirmar-botones { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
 .confirmar-botones .boton { flex: 1; }
+
+/* ---------- Color del dibujo (la gama en abanico) ---------- */
+.campo-color { margin-top: 14px; }
+.boton-color {
+  display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 7px 14px 7px 8px;
+  border: 1.5px solid var(--linea); border-radius: 999px; background: var(--papel-3); color: var(--oscura);
+  font: inherit; font-size: 15px; text-align: left; cursor: pointer;
+}
+.boton-color:focus-visible { outline: 3px solid var(--acento); outline-offset: 2px; }
+.boton-color-texto { flex: 1; min-width: 0; font-weight: 600; }
+.boton-color-abre { flex: none; font-family: var(--f-mano); font-size: 13px; color: var(--acento); }
+.muestra-color {
+  flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--tinta);
+  border: 2px solid var(--papel-3); box-shadow: 0 0 0 1.5px var(--oscura);
+}
+.muestra-color.grande { width: 44px; height: 44px; }
+
+.gama { position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column; justify-content: flex-end; }
+.gama-fondo { position: absolute; inset: 0; background: rgba(58, 42, 31, 0.42); animation: aparecer 0.25s ease both; }
+.gama-hoja {
+  position: relative; width: min(100%, 560px); margin: 0 auto; padding: 16px 14px calc(14px + var(--seguro-abajo));
+  border-radius: 24px 24px 0 0; background: var(--papel-3); box-shadow: 0 -10px 30px -12px rgba(58, 42, 31, 0.4);
+  animation: gama-sube 0.35s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+.gama.cerrando .gama-hoja { animation: gama-baja 0.22s ease both; }
+.gama.cerrando .gama-fondo { opacity: 0; transition: opacity 0.2s ease; }
+@keyframes gama-sube { from { transform: translateY(40%); opacity: 0; } }
+@keyframes gama-baja { to { transform: translateY(30%); opacity: 0; } }
+.gama-cabeza { display: flex; align-items: center; gap: 12px; padding: 0 4px 6px; }
+.gama-textos { flex: 1; min-width: 0; }
+.gama-titulo { margin: 0; font-weight: 700; font-size: 14px; }
+.gama-nombre { margin: 1px 0 0; font-family: var(--f-mano); font-size: 15px; color: var(--acento); }
+.gama-abanico { width: 100%; }
+.gama-svg { width: 100%; height: auto; overflow: visible; }
+/* el abanico se abre como un muestrario de marcadores */
+.gama-rayo {
+  transform-box: view-box; transform-origin: 200px 212px;
+  animation: gama-abre 0.62s cubic-bezier(0.2, 0.85, 0.3, 1.1) calc(var(--i) * 32ms) both;
+}
+@keyframes gama-abre { from { transform: rotate(var(--desde)); opacity: 0; } 30% { opacity: 1; } }
+.gama-muestra { cursor: pointer; outline: none; }
+.gama-muestra :is(path, rect) { stroke: var(--papel-3); stroke-width: 1; }
+.gama-muestra text { font-size: 7.4px; font-weight: 700; text-anchor: middle; dominant-baseline: central; pointer-events: none; letter-spacing: 0.02em; }
+.gama-muestra:hover :is(path, rect), .gama-muestra:focus-visible :is(path, rect) { stroke: var(--oscura); stroke-width: 1.6; }
+.gama-muestra.elegida :is(path, rect) { stroke: var(--oscura); stroke-width: 2.6; }
+.gama-muestra.elegida text { font-size: 8.4px; }
+.gama-centro { stroke: var(--papel-3); stroke-width: 3; transition: fill 0.25s ease; }
+.gama-pie { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 12px; padding-top: 8px; }
+@media (prefers-reduced-motion: reduce) { .gama-rayo, .gama-tira, .gama-neutro { animation: none; } }
+/* los pocos grises y la tinta */
+.gama-neutros { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 8px 2px 0; }
+.gama-neutro {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 4px 11px 4px 5px;
+  border: 1.5px solid var(--linea); border-radius: 999px; background: var(--papel-3); color: var(--oscura);
+  font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; animation: aparecer 0.4s ease 0.35s both;
+}
+.gama-neutro span { width: 22px; height: 22px; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.14); }
+.gama-neutro.elegida { border-color: var(--oscura); box-shadow: 0 0 0 1.5px var(--oscura); }
+.gama-neutro:focus-visible { outline: 3px solid var(--acento); outline-offset: 2px; }
+/* el muestrario de una familia: 3 tiras que se abren en abanico */
+.gama-familia .gama-muestra text { font-size: 10.5px; }
+.gama-familia .gama-muestra.elegida text { font-size: 11.5px; }
+.gama-familia .gama-muestra.elegida rect { stroke-width: 3.2; }
+.gama-tira {
+  transform-box: view-box; transform-origin: 200px 760px;
+  animation: gama-tira-abre 0.6s cubic-bezier(0.2, 0.85, 0.3, 1.1) calc(var(--i) * 70ms) both;
+}
+@keyframes gama-tira-abre { from { transform: rotate(0deg); opacity: 0; } 25% { opacity: 1; } }
+.gama-tira-nombre { font-family: var(--f-mano); font-size: 13px; fill: var(--oscura); text-anchor: middle; }

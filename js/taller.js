@@ -11,7 +11,7 @@
    ================================================================== */
 (function () {
   'use strict';
-  const I = window.Inluna, A = window.Arte, E = window.Escenas, D = window.Datos, S = window.Sonido;
+  const I = window.Inluna, A = window.Arte, E = window.Escenas, D = window.Datos, S = window.Sonido, Tintas = window.Tintas;
   const { $, $$, esc, espera, reducido, estado } = I;
 
   const g = {
@@ -24,12 +24,14 @@
   const capaAnimacion = window.Animaciones.capa;
 
   /* En el catálogo: la versión dibujada (o la foto con filtro de tinta) */
+  // la imagen de la tarjeta: el dibujo, entintado del color que elegiste
   function imagenCatalogo(p, ancho) {
     const original = p.fotos[0], dibujo = p.dibujos && p.dibujos[0];
-    if (dibujo) return I.imagen(dibujo, p.nombre, ancho);
+    const agotada = p.estado === 'agotado';
+    if (dibujo) return I.imagen(dibujo, p.nombre, ancho, { estilo: Tintas.estilo(p.color, { agotada }) });
     if (!original) return I.imagen('', p.nombre, ancho);
     const demo = /^(dibujo|patron):/.test(original);
-    return I.imagen(original, p.nombre, ancho, { clase: demo ? '' : 'foto-cruda' });
+    return I.imagen(original, p.nombre, ancho, { clase: demo ? '' : 'foto-cruda', estilo: Tintas.estilo(p.color, { cruda: !demo, agotada }) });
   }
   function marcoPieza(p, ancho) {
     const tipo = tipoAnimacion(p);

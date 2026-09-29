@@ -24,6 +24,8 @@ Tu catálogo en línea, con tu arte:
 
 **Tus fotos se convierten solas al estilo del catálogo:** cuando subes una foto desde el panel, el teléfono hace una versión "dibujada con tinta azul" y guarda **las dos** en tu Drive. En los arcos y tarjetas se ve el dibujo; al abrir la pieza, la foto original.
 
+**Cada pieza puede llevar su propio color de tinta:** en el panel, bajo la vista previa, toca **Color del dibujo** y se abre un abanico como el de los marcadores con **201 colores**: 13 familias (amarillo, naranja, coral, rojo, rosa, magenta, violeta, índigo, azul, turquesa, verde, verde limón y tierra), cada una en intensidad viva, media y suave, de claro a oscuro, más unos pocos grises. Toca un color para elegirlo y **Más tonos de…** para ver las tiras completas de esa familia. **Azul talavera** (B26) es el color de siempre. El dibujo se vuelve a entintar al momento, sin subir otra vez las fotos.
+
 Todo es **gratis**, sin suscripciones:
 
 | Pieza | Dónde vive | Costo |
@@ -67,7 +69,7 @@ Abre también `admin.html`: el panel funciona en **modo de prueba** con cualquie
 
 > **¿Olvidaste la clave?** Cámbiala en el script y vuelve a ejecutar **configurar** (no hace falta volver a implementar).
 > **¿Cambiaste el código del script?** Ve a **Implementar → Gestionar implementaciones → ✏️ → Versión: Nueva versión → Implementar**. La URL no cambia.
-> **¿Ya tenías instalado el script de la versión anterior?** Pega el `Codigo.gs` nuevo (vuelve a poner tu clave), guarda y crea una **Nueva versión** como se explica arriba. La columna nueva `animacion` se agrega sola a tu hoja la primera vez que guardes una pieza.
+> **¿Ya tenías instalado el script de la versión anterior?** Pega el `Codigo.gs` nuevo (vuelve a poner tu clave), guarda y crea una **Nueva versión** como se explica arriba. Las columnas nuevas (`animacion`, `color`) se agregan solas a tu hoja la primera vez que guardes una pieza.
 
 ---
 
@@ -130,6 +132,7 @@ Abre **`https://TU-USUARIO.github.io/catalogo/admin.html`** y entra con tu clave
 | Cambiar el orden | **Ordenar** → flechas ↑ ↓ → **Guardar orden** |
 | Crear una pieza parecida | Abre una pieza → **Duplicar pieza** |
 | Elegir su animación | *Animación* → **Automática** (la adivina por el nombre) o elige una: Vapor, Balanceo, Girar, Hojear, Brillo, Flores, Llama o Sin animación. La **vista previa** te la muestra antes de guardar |
+| Cambiar el color del dibujo | Bajo la vista previa toca **Color del dibujo** → elige en el abanico (o **Más tonos de…**) → **Listo** → Guardar. **Volver al azul talavera** lo regresa al azul de siempre. Mientras tengas el panel abierto, cada pieza nueva empieza con el último color que usaste |
 | Cambiar WhatsApp, Instagram, textos o moneda | Engrane ⚙ **Ajustes** |
 
 - Las fotos se achican solas en el teléfono antes de subirse (rápido y ligero) y se guardan en tu Drive, **cada una en dos versiones**: la original y la dibujada (en el panel llevan la marca ✦). Tarda un par de segundos por foto.
@@ -152,6 +155,7 @@ Abre **`https://TU-USUARIO.github.io/catalogo/admin.html`** y entra con tu clave
 | `estado` | `disponible`, `encargo`, `agotado` u `oculto` |
 | `destacado` | ✔ para que salga en Favoritas |
 | `animacion` | `auto`, `vapor`, `colgar`, `girar`, `hojear`, `brillo`, `flores`, `llama` o `ninguna` (vacío = `auto`) |
+| `color` | Color de la tinta del dibujo como `#rrggbb` (ej. `#d4452b`). Vacío = azul talavera |
 | `orden` | Número: las piezas se muestran de menor a mayor |
 
 ---
@@ -181,7 +185,7 @@ Abre **`https://TU-USUARIO.github.io/catalogo/admin.html`** y entra con tu clave
 | "Demasiados intentos" | Espera 15 minutos (protección contra quien intente adivinar tu clave). |
 | Cambié algo en la hoja y no se ve | Espera unos segundos y recarga. El catálogo guarda una copia por hasta 5 minutos. |
 | Una foto no se convirtió en dibujo | Ábrela en el panel y toca **✦ dibujar**. Si dice que no pudo, bórrala y súbela otra vez desde tu teléfono: se convierte sola al subir. |
-| Elijo una *Animación* en el panel y no se guarda | Actualizaste la página pero no el script: pega el `Codigo.gs` nuevo y crea una **Nueva versión** de la implementación (paso 1). |
+| Elijo una *Animación* o un *Color del dibujo* en el panel y no se guarda (o el panel avisa que tu Apps Script no guarda el color) | Actualizaste la página pero no el script: pega el `Codigo.gs` nuevo y crea una **Nueva versión** de la implementación (paso 1). |
 
 **¿Cuánto aguanta gratis?** Para un catálogo de un taller, de sobra: Google permite miles de visitas y cambios al día, y GitHub Pages sirve páginas a mucho tráfico sin costo.
 
@@ -205,6 +209,7 @@ catalogo-inluna/
 │   ├── escenas.js        ← la casita de la entrada y las piezas del interior
 │   ├── animaciones.js    ← qué animación lleva cada pieza
 │   ├── estilo.js         ← convierte tus fotos al dibujo en tinta azul
+│   ├── tintas.js         ← la gama de 201 colores para la tinta de cada pieza
 │   ├── sonido.js         ← campanitas (opcionales)
 │   ├── datos.js          ← conexión con tu hoja de Google
 │   ├── nucleo.js         ← utilidades compartidas del catálogo

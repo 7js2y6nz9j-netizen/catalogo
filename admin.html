@@ -15,9 +15,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400..600&family=Klee+One:wght@400;600&display=swap">
-  <link rel="stylesheet" href="css/base.css?v=20260929b">
-  <link rel="stylesheet" href="css/piezas.css?v=20260929b">
-  <link rel="stylesheet" href="css/admin.css?v=20260929b">
+  <link rel="stylesheet" href="css/base.css?v=20260929c">
+  <link rel="stylesheet" href="css/piezas.css?v=20260929c">
+  <link rel="stylesheet" href="css/admin.css?v=20260929c">
 </head>
 <body class="admin papel">
 
@@ -109,7 +109,7 @@
           <h3 class="bloque-titulo">Fotos <span>la primera es la portada</span></h3>
           <div class="fotos-editor" id="fotos-editor"></div>
           <input type="file" id="input-fotos" accept="image/*" multiple hidden>
-          <p class="campo-ayuda">✦ Cada foto se convierte sola al estilo del catálogo (tinta azul). La original se ve cuando alguien abre la pieza.</p>
+          <p class="campo-ayuda">✦ Cada foto se convierte sola al estilo del catálogo (un dibujo en tinta, del color que elijas abajo). La original se ve cuando alguien abre la pieza.</p>
           <button type="button" class="enlace-suave" id="pegar-enlace">o pega el enlace de una imagen</button>
         </section>
 
@@ -133,7 +133,38 @@
               <span class="campo-ayuda">«Automática» la elige por el nombre: taza → vapor, bolsa → balanceo, plato → girar…</span>
             </label>
           </div>
+          <div class="campo campo-color">
+            <span class="campo-etiqueta" id="etiqueta-color">Color del dibujo</span>
+            <button type="button" class="boton-color" id="abrir-gama" aria-labelledby="etiqueta-color nombre-color" aria-haspopup="dialog">
+              <span class="muestra-color" id="muestra-color"></span>
+              <span class="boton-color-texto" id="nombre-color">Azul talavera · B26</span>
+              <span class="boton-color-abre" aria-hidden="true">abrir la gama</span>
+            </button>
+            <input type="hidden" name="color">
+            <span class="campo-ayuda">Tus fotos se guardan igual: solo cambia la tinta con la que se dibujan en el catálogo.</span>
+          </div>
         </section>
+
+        <!-- La gama de colores: se despliega como un abanico de marcadores -->
+        <div class="gama" id="gama" hidden>
+          <div class="gama-fondo" data-cerrar-gama></div>
+          <div class="gama-hoja" role="dialog" aria-modal="true" aria-labelledby="gama-titulo">
+            <div class="gama-cabeza">
+              <span class="muestra-color grande" id="gama-muestra"></span>
+              <div class="gama-textos">
+                <p class="gama-titulo" id="gama-titulo">Color del dibujo</p>
+                <p class="gama-nombre" id="gama-nombre">Azul talavera · B26</p>
+              </div>
+              <button type="button" class="boton boton-tinta boton-chico" data-cerrar-gama>Listo</button>
+            </div>
+            <div class="gama-abanico" id="gama-abanico"></div>
+            <div class="gama-pie">
+              <button type="button" class="boton boton-chico" id="gama-volver" hidden>‹ Todas las familias</button>
+              <button type="button" class="boton boton-chico" id="gama-mas" hidden>Más tonos ›</button>
+              <button type="button" class="enlace-suave" id="gama-original">Volver al azul talavera</button>
+            </div>
+          </div>
+        </div>
 
         <label class="campo">
           <span class="campo-etiqueta">Nombre</span>
@@ -269,12 +300,13 @@
     </filter>
   </svg>
 
-  <script src="js/config.js?v=20260929b"></script>
-  <script src="js/arte.js?v=20260929b"></script>
-  <script src="js/demo.js?v=20260929b"></script>
-  <script src="js/datos.js?v=20260929b"></script>
-  <script src="js/animaciones.js?v=20260929b"></script>
-  <script src="js/estilo.js?v=20260929b"></script>
-  <script src="js/admin.js?v=20260929b"></script>
+  <script src="js/config.js?v=20260929c"></script>
+  <script src="js/arte.js?v=20260929c"></script>
+  <script src="js/demo.js?v=20260929c"></script>
+  <script src="js/datos.js?v=20260929c"></script>
+  <script src="js/tintas.js?v=20260929c"></script>
+  <script src="js/animaciones.js?v=20260929c"></script>
+  <script src="js/estilo.js?v=20260929c"></script>
+  <script src="js/admin.js?v=20260929c"></script>
 </body>
 </html>

@@ -65,10 +65,10 @@
   const textoEstado = (p) => ({ disponible: 'Disponible', encargo: 'Sobre pedido', agotado: 'Agotado' }[p.estado] || '');
 
   /* ---------- imágenes ---------- */
-  function imagen(ref, alt, ancho, { perezosa = true, clase = '' } = {}) {
+  function imagen(ref, alt, ancho, { perezosa = true, clase = '', estilo = '' } = {}) {
     if (!ref) return `<span class="sin-foto">${A.logo()}</span>`;
     const alterna = D.urlImagenAlterna(ref, ancho);
-    return `<img src="${esc(D.urlImagen(ref, ancho))}" alt="${esc(alt)}"${clase ? ` class="${clase}"` : ''}${perezosa ? ' loading="lazy"' : ''} decoding="async"${alterna ? ` data-alterna="${esc(alterna)}"` : ''}>`;
+    return `<img src="${esc(D.urlImagen(ref, ancho))}" alt="${esc(alt)}"${clase ? ` class="${clase}"` : ''}${estilo ? ` style="${esc(estilo)}"` : ''}${perezosa ? ' loading="lazy"' : ''} decoding="async"${alterna ? ` data-alterna="${esc(alterna)}"` : ''}>`;
   }
   function prepararImagenes(cont) {
     $$('img', cont).forEach((img) => { if (img.complete && img.naturalWidth) img.classList.add('cargada'); });

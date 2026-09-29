@@ -5,7 +5,7 @@
    ================================================================== */
 (function () {
   'use strict';
-  const A = window.Arte, D = window.Datos, B = window.Datos.backend;
+  const A = window.Arte, D = window.Datos, B = window.Datos.backend, Tintas = window.Tintas;
   const $ = (s, el = document) => el.querySelector(s);
   const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
   const espera = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -153,7 +153,9 @@
   function filaHTML(p, i, total) {
     const precio = D.formatoPrecio(p.precio, estado.ajustes.moneda);
     const ref = (p.dibujos && p.dibujos[0]) || p.fotos[0];
-    const foto = ref ? `<img src="${esc(D.urlImagen(ref, 240))}" alt="" loading="lazy" decoding="async">` : A.logo();
+    const dibujada = (p.dibujos && p.dibujos[0]) || /^(dibujo|patron):/.test(ref || '');
+    const tinta = dibujada ? Tintas.estilo(p.color) : '';
+    const foto = ref ? `<img src="${esc(D.urlImagen(ref, 240))}" alt="" loading="lazy" decoding="async"${tinta ? ` style="${tinta}"` : ''}>` : A.logo();
     const orden = estado.ordenando
       ? `<span class="fila-orden"><button type="button" data-subir="${esc(p.id)}" aria-label="Subir ${esc(p.nombre)}"${i === 0 ? ' disabled' : ''}>${A.ICONOS.arriba}</button>` +
         `<button type="button" data-bajar="${esc(p.id)}" aria-label="Bajar ${esc(p.nombre)}"${i === total - 1 ? ' disabled' : ''}>${A.ICONOS.abajo}</button></span>`
@@ -295,12 +297,15 @@
     f.estado.value = b.estado || 'disponible';
     f.destacado.checked = !!b.destacado;
     f.animacion.value = b.animacion || 'auto';
+    f.color.value = Tintas.normalizar(b.color);
+    pintarColor();
     f.nombre.removeAttribute('aria-invalid');
   }
 
   function abrirEditor(p, { copia = false } = {}) {
     const base = p ? JSON.parse(JSON.stringify(p)) : {
       id: '', nombre: '', precio: '', categoria: estado.ultimaCategoria || '', descripcion: '', fotos: [], dibujos: [], estado: 'disponible', destacado: false, animacion: 'auto',
+      color: estado.ultimoColor || '',
     };
     if (copia) { base.id = ''; base.nombre = `${base.nombre} (copia)`; }
     const dibujos = base.dibujos || [];
@@ -330,7 +335,7 @@
     cerrarHoja(dlgEditor);
   }
 
-  dlgEditor.addEventListener('cancel', (e) => { e.preventDefault(); intentarCerrarEditor(); });
+  dlgEditor.addEventListener('cancel', (e) => { e.preventDefault(); if (!$('#gama').hidden) { cerrarGama(); return; } intentarCerrarEditor(); });
   $('[data-cerrar]', dlgEditor).addEventListener('click', intentarCerrarEditor);
   form.addEventListener('input', () => { estado.cambios = true; renderVistaPrevia(); });
   form.elements.animacion.addEventListener('change', renderVistaPrevia);
@@ -351,8 +356,9 @@
     $('#fotos-editor').innerHTML = b.fotos.map((f, i) => {
       const src = f.vista || D.urlImagen(f.dibujo || f.ref, 320);
       const conEstilo = f.vista || f.dibujo || esDibujoDemo(f.ref);
+      const tinta = Tintas.estilo(form.elements.color.value, { cruda: !conEstilo });
       return `<div class="foto-mini ${f.estado}">
-        ${src ? `<img src="${esc(src)}" alt="Foto ${i + 1}"${conEstilo ? '' : ' class="foto-cruda"'}>` : ''}
+        ${src ? `<img src="${esc(src)}" alt="Foto ${i + 1}"${conEstilo ? '' : ' class="foto-cruda"'}${tinta ? ` style="${tinta}"` : ''}>` : ''}
         ${i === 0 ? '<span class="foto-portada">Portada</span>'
           : f.estado === 'lista' ? `<button type="button" class="foto-accion foto-hacer-portada" data-portada="${i}" aria-label="Usar como portada">${A.ICONOS.estrella}</button>` : ''}
         <button type="button" class="foto-accion foto-quitar" data-quitar="${i}" aria-label="Quitar foto ${i + 1}">${A.ICONOS.cerrar}</button>
@@ -377,11 +383,128 @@
     if (primera) {
       const src = primera.vista || D.urlImagen(primera.dibujo || primera.ref, 480);
       const cruda = !primera.vista && !primera.dibujo && !esDibujoDemo(primera.ref);
-      img = `<img src="${esc(src)}" alt="" class="cargada${cruda ? ' foto-cruda' : ''}">`;
+      const tinta = Tintas.estilo(f.color.value, { cruda });
+      img = `<img src="${esc(src)}" alt="" class="cargada${cruda ? ' foto-cruda' : ''}"${tinta ? ` style="${tinta}"` : ''}>`;
     }
     marco.innerHTML = `<span class="marco-img${tipo ? ` anim-${tipo}` : ''}">${img}${window.Animaciones.capa(tipo)}</span>${A.marcoArco()}`;
     $('#vp-tipo').textContent = tipo ? `✦ ${window.Animaciones.NOMBRES[tipo]}` : 'sin animación';
   }
+
+  /* ---------- color del dibujo: la gama se despliega como un abanico ---------- */
+  const gama = $('#gama');
+  function pintarColor() {
+    const v = form.elements.color.value;
+    $('#muestra-color').style.background = Tintas.normalizar(v) || Tintas.TALAVERA;
+    $('#nombre-color').textContent = Tintas.nombre(v);
+  }
+  let gamaFamilia = null; // null = el abanico de familias; 'B' = el muestrario de esa familia
+  const q = (v) => Math.round(v * 10) / 10;
+  const muestraAttrs = (x, elegido) =>
+    `class="gama-muestra${x.hex === elegido ? ' elegida' : ''}" data-color="${x.hex}" tabindex="0" role="button" aria-label="${esc(x.familia)} ${x.codigo}"`;
+
+  // 1 · el abanico de familias (como tu referencia): un rayo por familia con
+  //     sus 5 tonos de intensidad media, oscuros al centro y claros afuera
+  function abanicoFamilias(elegido) {
+    const cx = 200, cy = 212, r0 = 58, prof = 25, sep = 3;
+    const fam = Tintas.FAMILIAS, paso = 180 / fam.length;
+    const pto = (r, a) => [cx + r * Math.cos((a * Math.PI) / 180), cy - r * Math.sin((a * Math.PI) / 180)];
+    let s = '';
+    fam.forEach((fa, k) => {
+      const a1 = 180 - k * paso - 0.7, a2 = 180 - (k + 1) * paso + 0.7, medio = (a1 + a2) / 2;
+      let g = '';
+      Tintas.tonosDe(fa.k, '2').slice().reverse().forEach((x, j) => {
+        const ri = r0 + j * (prof + sep), re = ri + prof;
+        const [x1, y1] = pto(ri, a1), [x2, y2] = pto(re, a1), [x3, y3] = pto(re, a2), [x4, y4] = pto(ri, a2);
+        const d = `M${q(x1)},${q(y1)}L${q(x2)},${q(y2)}A${re},${re} 0 0 1 ${q(x3)},${q(y3)}L${q(x4)},${q(y4)}A${ri},${ri} 0 0 0 ${q(x1)},${q(y1)}Z`;
+        const [tx, ty] = pto(ri + prof / 2, medio);
+        const giro = medio > 90 ? 180 - medio : -medio;
+        g += `<g ${muestraAttrs(x, elegido)}><path d="${d}" fill="${x.hex}"/>` +
+          `<text x="${q(tx)}" y="${q(ty)}" transform="rotate(${q(giro)} ${q(tx)} ${q(ty)})" fill="${x.claro ? '#3a2a1f' : '#fff'}">${x.codigo}</text></g>`;
+      });
+      s += `<g class="gama-rayo" style="--i:${k};--desde:${q(medio - paso / 2)}deg">${g}</g>`;
+    });
+    s += `<path class="gama-centro" d="M${cx - 48},${cy}A48,48 0 0 1 ${cx + 48},${cy}Z" fill="${elegido}"/>`;
+    return `<svg class="gama-svg" viewBox="0 0 400 216" role="group" aria-label="Familias de color">${s}</svg>`;
+  }
+  // los pocos grises y la tinta, en una fila
+  const filaNeutros = (elegido) => `<div class="gama-neutros" role="group" aria-label="Grises y tinta">${Tintas.neutros().map((x) =>
+    `<button type="button" class="gama-neutro${x.hex === elegido ? ' elegida' : ''}" data-color="${x.hex}" style="--c:${x.hex}" aria-label="${esc(x.familia)} ${x.codigo}"><span></span>${x.codigo}</button>`).join('')}</div>`;
+
+  // 2 · el muestrario de una familia: 3 tiras (viva, media, suave) × 5 tonos, abiertas en abanico
+  function abanicoFamilia(k, elegido) {
+    const px = 200, py = 760, ancho = 62, alto = 32;
+    let s = '';
+    Tintas.GRUPOS.forEach((gr, i) => {
+      const giro = (i - 1) * 7.5;
+      let g = '';
+      Tintas.tonosDe(k, gr.d).forEach((x, j) => { // arriba el más claro
+        const R = 700 - j * 38;
+        g += `<g ${muestraAttrs(x, elegido)}><rect x="${px - ancho / 2}" y="${py - R - alto / 2}" width="${ancho}" height="${alto}" rx="8" fill="${x.hex}"/>` +
+          `<text x="${px}" y="${py - R}" fill="${x.claro ? '#3a2a1f' : '#fff'}">${x.codigo}</text></g>`;
+      });
+      g += `<text class="gama-tira-nombre" x="${px}" y="${py - 700 + 5 * 38 + 8}">${gr.nombre}</text>`;
+      s += `<g class="gama-tira" style="--i:${i};transform:rotate(${giro}deg)">${g}</g>`;
+    });
+    return `<svg class="gama-svg gama-familia" viewBox="0 0 400 290" role="group" aria-label="Tonos de ${esc(Tintas.familia(k).nombre)}">${s}</svg>`;
+  }
+
+  function colorActual() { return Tintas.normalizar(form.elements.color.value) || Tintas.TALAVERA; }
+  function pieGama(hex) {
+    const d = Tintas.datos(hex), fam = !d.neutro && d.k && Tintas.familia(d.k);
+    const mas = $('#gama-mas');
+    mas.hidden = !!gamaFamilia || !fam;
+    if (fam) mas.textContent = `Más tonos de ${fam.nombre} ›`;
+    $('#gama-volver').hidden = !gamaFamilia;
+    $('#gama-titulo').textContent = gamaFamilia ? `Tonos de ${Tintas.familia(gamaFamilia).nombre}` : 'Color del dibujo';
+  }
+  function marcarGama(hex) {
+    $('#gama-muestra').style.background = hex;
+    $('#gama-nombre').textContent = Tintas.nombre(hex);
+    const centro = $('.gama-centro', gama);
+    if (centro) centro.setAttribute('fill', hex);
+    $$('[data-color]', gama).forEach((m) => m.classList.toggle('elegida', m.dataset.color === hex));
+    pieGama(hex);
+  }
+  function renderGama() {
+    const hex = colorActual();
+    $('#gama-abanico').innerHTML = gamaFamilia ? abanicoFamilia(gamaFamilia, hex) : abanicoFamilias(hex) + filaNeutros(hex);
+    marcarGama(hex);
+  }
+  function abrirGama() {
+    gamaFamilia = null;
+    renderGama();
+    gama.classList.remove('cerrando');
+    gama.hidden = false;
+  }
+  async function cerrarGama() {
+    if (gama.hidden) return;
+    gama.classList.add('cerrando');
+    await espera(220);
+    gama.hidden = true;
+    gama.classList.remove('cerrando');
+    $('#abrir-gama').focus({ preventScroll: true });
+  }
+  function elegirColor(hex) {
+    form.elements.color.value = Tintas.normalizar(hex);
+    estado.cambios = true;
+    marcarGama(hex);
+    pintarColor();
+    renderFotos();
+  }
+  $('#abrir-gama').addEventListener('click', abrirGama);
+  gama.addEventListener('click', (e) => {
+    if (e.target.closest('[data-cerrar-gama]')) { cerrarGama(); return; }
+    const m = e.target.closest('[data-color]');
+    if (m) elegirColor(m.dataset.color);
+  });
+  gama.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { e.preventDefault(); if (gamaFamilia) { gamaFamilia = null; renderGama(); } else cerrarGama(); return; }
+    const m = e.target.closest('.gama-muestra');
+    if (m && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); elegirColor(m.dataset.color); }
+  });
+  $('#gama-mas').addEventListener('click', () => { gamaFamilia = Tintas.datos(colorActual()).k; renderGama(); });
+  $('#gama-volver').addEventListener('click', () => { gamaFamilia = null; renderGama(); });
+  $('#gama-original').addEventListener('click', () => elegirColor(Tintas.TALAVERA));
 
   $('#fotos-editor').addEventListener('click', (e) => {
     const b = estado.borrador;
@@ -545,6 +668,7 @@
       estado: f.estado.value || 'disponible',
       destacado: f.destacado.checked,
       animacion: f.animacion.value || 'auto',
+      color: Tintas.normalizar(f.color.value),
     };
   }
 
@@ -566,16 +690,20 @@
     boton.textContent = 'Guardando…';
     try {
       const r = await B.guardar(estado.token, datos);
+      // un Apps Script de antes no conoce el color: avisa para actualizarlo
+      const sinColor = datos.color && r.producto && !('color' in r.producto);
       const guardado = D.normalizarProducto(r.producto || datos, estado.productos.length);
       const i = estado.productos.findIndex((p) => p.id === guardado.id);
       if (i >= 0) estado.productos[i] = guardado; else estado.productos.push(guardado);
       estado.productos.sort((x, y) => x.orden - y.orden);
       estado.ultimaCategoria = datos.categoria;
+      estado.ultimoColor = datos.color;
       estado.cambios = false;
       renderLista();
       estado.borrador = null;
       await cerrarHoja(dlgEditor);
-      aviso(i >= 0 ? 'Cambios guardados ✓' : 'Pieza agregada al catálogo ✓');
+      if (sinColor) aviso('Se guardó la pieza, pero tu Apps Script todavía no guarda el color: actualízalo (LEEME.md, paso 1).', 'error');
+      else aviso(i >= 0 ? 'Cambios guardados ✓' : 'Pieza agregada al catálogo ✓');
     } catch (err) { manejarError(err); } finally {
       boton.disabled = false;
       boton.textContent = 'Guardar pieza';

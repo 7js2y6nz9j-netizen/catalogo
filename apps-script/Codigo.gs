@@ -26,7 +26,7 @@ const CLAVE_DEL_PANEL = 'cambia-esta-clave';
 
 const HOJA_PIEZAS = 'piezas';
 const HOJA_AJUSTES = 'ajustes';
-const COLUMNAS = ['id', 'nombre', 'precio', 'categoria', 'descripcion', 'fotos', 'estado', 'destacado', 'animacion', 'orden', 'actualizado'];
+const COLUMNAS = ['id', 'nombre', 'precio', 'categoria', 'descripcion', 'fotos', 'estado', 'destacado', 'animacion', 'color', 'orden', 'actualizado'];
 const ESTADOS = ['disponible', 'encargo', 'agotado', 'oculto'];
 const ANIMACIONES = ['auto', 'vapor', 'colgar', 'girar', 'hojear', 'brillo', 'flores', 'llama', 'ninguna'];
 const AJUSTES_INICIALES = [
@@ -68,10 +68,10 @@ function configurar() {
     hoja.getRange(1, 1, 1, COLUMNAS.length).setValues([COLUMNAS])
       .setFontWeight('bold').setBackground('#2742b0').setFontColor('#ffffff');
     hoja.setFrozenRows(1);
-    const anchos = { id: 150, nombre: 200, precio: 90, categoria: 130, descripcion: 320, fotos: 260, estado: 110, destacado: 90, animacion: 110, orden: 70, actualizado: 150 };
+    const anchos = { id: 150, nombre: 200, precio: 90, categoria: 130, descripcion: 320, fotos: 260, estado: 110, destacado: 90, animacion: 110, color: 90, orden: 70, actualizado: 150 };
     COLUMNAS.forEach(function (c, i) {
       hoja.setColumnWidth(i + 1, anchos[c] || 120);
-      if (['id', 'nombre', 'categoria', 'descripcion', 'fotos', 'animacion'].indexOf(c) >= 0) hoja.getRange(2, i + 1, 999, 1).setNumberFormat('@');
+      if (['id', 'nombre', 'categoria', 'descripcion', 'fotos', 'animacion', 'color'].indexOf(c) >= 0) hoja.getRange(2, i + 1, 999, 1).setNumberFormat('@');
     });
     const colEstado = COLUMNAS.indexOf('estado') + 1, colDest = COLUMNAS.indexOf('destacado') + 1, colAnim = COLUMNAS.indexOf('animacion') + 1;
     hoja.getRange(2, colEstado, 999, 1).setDataValidation(
@@ -181,6 +181,7 @@ function guardar_(p) {
     estado: normalizarEstado_(p.estado),
     destacado: p.destacado === true || p.destacado === 'true',
     animacion: normalizarAnimacion_(p.animacion),
+    color: normalizarColor_(p.color),
     orden: fila ? (Number(fila.orden) || datos.filas.length + 1) : siguienteOrden_(datos.filas),
     actualizado: new Date(),
   };
@@ -377,8 +378,15 @@ function limpiarPieza_(f) {
     estado: normalizarEstado_(f.estado),
     destacado: f.destacado === true || /^(si|sí|true|verdadero|x|1)$/i.test(String(f.destacado || '').trim()),
     animacion: normalizarAnimacion_(f.animacion),
+    color: normalizarColor_(f.color),
     orden: Number(f.orden) || 0,
   };
+}
+
+/* Color de la tinta del dibujo (#rrggbb); vacío = azul talavera */
+function normalizarColor_(v) {
+  const s = String(v || '').trim().toLowerCase();
+  return /^#[0-9a-f]{6}$/.test(s) ? s : '';
 }
 
 function normalizarAnimacion_(v) {
@@ -399,6 +407,7 @@ function asegurarColumnas_(hoja) {
     if (actuales.indexOf(c) < 0) {
       col += 1;
       hoja.getRange(1, col).setValue(c).setFontWeight('bold').setBackground('#2742b0').setFontColor('#ffffff');
+      if (c === 'color') hoja.getRange(2, col, 999, 1).setNumberFormat('@');
       if (c === 'animacion') {
         hoja.getRange(2, col, 999, 1).setNumberFormat('@').setDataValidation(
           SpreadsheetApp.newDataValidation().requireValueInList(ANIMACIONES, true).setAllowInvalid(true).build());

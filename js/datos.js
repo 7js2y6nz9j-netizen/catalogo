@@ -45,6 +45,11 @@
     const s = sinAcentos(v).toLowerCase().trim();
     return ANIMACIONES.includes(s) ? s : 'auto';
   }
+  /* Color de la tinta del dibujo: '' = azul talavera (el de siempre) */
+  function normalizarColor(v) {
+    const s = String(v == null ? '' : v).trim().toLowerCase();
+    return /^#[0-9a-f]{6}$/.test(s) ? s : '';
+  }
 
   function normalizarProducto(p, i) {
     const nombre = String(p.nombre == null ? '' : p.nombre).trim();
@@ -60,6 +65,7 @@
       estado: normalizarEstado(p.estado),
       destacado: esVerdadero(p.destacado),
       animacion: normalizarAnimacion(p.animacion),
+      color: normalizarColor(p.color),
       orden: Number(p.orden) || 1000 + i,
     };
   }
@@ -241,7 +247,7 @@
   }
 
   window.Datos = {
-    backend, cargar, procesar, normalizarProducto, normalizarEstado, normalizarAnimacion, mezclarAjustes,
+    backend, cargar, procesar, normalizarProducto, normalizarEstado, normalizarAnimacion, normalizarColor, mezclarAjustes,
     urlImagen, urlImagenAlterna, idDeDrive, formatoPrecio, slug, listaFotos, esVerdadero, parFoto, unirFotos,
     ANIMACIONES, modoPrueba: backend.tipo === 'prueba',
   };

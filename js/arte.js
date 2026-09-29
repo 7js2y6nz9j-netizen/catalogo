@@ -9,10 +9,18 @@
   'use strict';
 
   const CFG = window.INLUNA_CONFIG || {};
-  const COL = Object.assign({ tinta: '#2742b0', oscura: '#17205c', papel: '#f4eee1' }, CFG.colores || {});
-  const T = COL.tinta;   // azul cobalto
-  const O = COL.oscura;  // contornos
-  const P = COL.papel;   // papel crema
+  const COL = Object.assign({
+    tinta: '#2742b0', oscura: '#3a2a1f', papel: '#f4eee1',
+    verde: '#00aa1f', verdeClaro: '#8fcf7e', cafe: '#8b5a35', dorado: '#d99a2b', luna: '#e9decf',
+  }, CFG.colores || {});
+  const T = COL.tinta;       // azul talavera: solo azulejos, frisos, macetas y marcos
+  const O = COL.oscura;      // tinta café: contornos
+  const P = COL.papel;       // papel crema
+  const V = COL.verde;       // hojas y logo
+  const VC = COL.verdeClaro; // hojas claras
+  const C = COL.cafe;        // ramas y techo
+  const D = COL.dorado;      // estrellas y flores
+  const LU = COL.luna;       // la luna de Inluna
   const R3 = Math.sqrt(3);
   const f = (n) => Math.round(n * 10) / 10;
   const pt = (p) => `${f(p[0])},${f(p[1])}`;
@@ -63,40 +71,53 @@
   const sombraSuelo = (cx, cy, rx, ry) => `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${O}" opacity=".12"/>`;
 
   /* ================================================================
-     LOGO · tres triángulos invertidos con franja a la derecha
+     LOGO · las seis hojas verdes de Inluna, girando alrededor del
+     centro (50,50). La hoja se trazó sobre tu logo original.
      ================================================================ */
-  const LOGO_TRIS = (function () {
-    const s = 44, h = s * R3 / 2, g = 4;
-    return [[4, 4], [4 + s + g, 4], [4 + (s + g) / 2, 4 + h + g * 0.8]].map(([x, y]) => {
-      const L = [x, y], R = [x + s, y], B = [x + s / 2, y + h];
-      const k = 2 * (s * 0.2) / R3;
-      const Q = [x + s - k, y];
-      const Pb = lerp(B, L, k / s);
-      return { L, R, B, Q, P: Pb, c: [x + s / 2, y + h / 3], cb: [(L[0] + Q[0] + Pb[0]) / 3, (L[1] + Q[1] + Pb[1]) / 3], s };
-    });
-  })();
+  const HOJA_LOGO = 'M0,37.9C1.2,37.2 2.2,36.4 3.4,35.7C4.5,35.1 5.7,34.4 6.9,33.9C8.2,33.3 9.4,32.9 10.7,32.6' +
+    'C12,32.2 13.3,31.9 14.6,31.7C15.9,31.5 17.3,31.4 18.6,31.4C19.9,31.3 21.3,31.4 22.6,31.6C23.9,31.7 25.2,32 26.5,32.3' +
+    'C27.8,32.7 29.1,33 30.3,33.5C31.6,33.9 32.8,34.5 34,35.1C35.2,35.7 36.4,36.3 37.5,37.1C38.6,37.8 39.8,38.6 40.5,39.6' +
+    'C41.3,40.6 42.2,42.1 42.1,43.2C41.9,44.3 40.7,45.4 39.7,46.2C38.7,47 37.3,47.5 36.1,48C34.8,48.4 33.5,48.7 32.2,49' +
+    'C30.9,49.3 29.6,49.5 28.3,49.7C27,49.8 25.6,49.8 24.3,49.8C22.9,49.8 21.6,49.8 20.3,49.6C19,49.5 17.6,49.2 16.4,48.9' +
+    'C15.1,48.5 13.8,48.1 12.6,47.5C11.4,47 10.2,46.4 9,45.7C7.9,45.1 6.7,44.4 5.7,43.5C4.6,42.7 3.6,41.8 2.7,40.9' +
+    'C1.8,39.9 0.9,38.9 0,37.9Z';
 
-  function logoPartes({ estrellas = false, trama = false } = {}) {
-    return LOGO_TRIS.map((t) => {
-      const tri = `M${pt(t.L)}L${pt(t.R)}L${pt(t.B)}Z`;
-      const banda = `M${pt(t.Q)}L${pt(t.R)}L${pt(t.B)}L${pt(t.P)}Z`;
-      let extra = '';
-      if (trama) {
-        [0.3, 0.64].forEach((q) => {
-          const k = 2 * (t.s * 0.2 * q) / R3;
-          extra += `<path class="tri-trama" d="M${pt([t.R[0] - k, t.R[1]])}L${pt(lerp(t.B, t.L, k / t.s))}" stroke="${P}" stroke-width="0.9" opacity=".55"/>`;
-        });
-      }
-      if (estrellas) extra += `<path class="tri-estrella" d="${destello(t.cb[0], t.cb[1], t.s * 0.16, 0.16)}" fill="none" stroke="${T}" stroke-width="1.6" stroke-linejoin="round"/>`;
-      return `<g class="tri" style="transform-origin:${f(t.c[0])}px ${f(t.c[1])}px">` +
-        `<path class="tri-fondo" d="${tri}" fill="${P}"/><path class="tri-banda" d="${banda}" fill="${T}"/>${extra}` +
-        `<path class="tri-borde" pathLength="1" d="${tri}" fill="none" stroke="${O}" stroke-width="2.6" stroke-linejoin="round"/></g>`;
-    }).join('');
+  // Gira los puntos de una ruta (solo M y C absolutos) alrededor de (cx,cy)
+  function girarRuta(d, grados, cx = 50, cy = 50) {
+    const a = grados * Math.PI / 180, co = Math.cos(a), si = Math.sin(a);
+    return d.replace(/(-?\d*\.?\d+),(-?\d*\.?\d+)/g, (m, sx, sy) => {
+      const x = Number(sx) - cx, y = Number(sy) - cy;
+      return `${f(cx + x * co - y * si)},${f(cy + x * si + y * co)}`;
+    });
+  }
+  // Las seis hojas ya giradas (sin transform, para poder animarlas con CSS)
+  const HOJAS_LOGO = [0, 1, 2, 3, 4, 5].map((k) => girarRuta(HOJA_LOGO, k * 60));
+
+  function logoPartes({ color = V } = {}) {
+    return `<g class="hojas-logo">${HOJAS_LOGO.map((d) => `<path class="hoja-logo" d="${d}" fill="${color}"/>`).join('')}</g>`;
   }
 
-  function logo({ estrellas = false, trama = false, clase = '', etiqueta = '' } = {}) {
+  function logo({ clase = '', etiqueta = '' } = {}) {
     const a11y = etiqueta ? `role="img" aria-label="${etiqueta}"` : 'aria-hidden="true" focusable="false"';
-    return `<svg class="logo ${clase}" viewBox="0 0 100 88" ${a11y}>${logoPartes({ estrellas, trama })}</svg>`;
+    return `<svg class="logo ${clase}" viewBox="0 0 100 100" ${a11y}>${logoPartes()}</svg>`;
+  }
+
+  /* La luna de Inluna: media luna con tres patas (medidas de tu logo) */
+  const LUNA_CAJA = { x: 19, y: 46, w: 211, h: 195 };
+  const LUNA_LOGO = [
+    'M19,46A105.5,105.5 0 0 0 230,46H184.8A61,61 0 0 1 64.2,46Z',
+    'M26,99.3A112,112 0 0 0 66,141.5V207H26Z',
+    'M104,156.1A112,112 0 0 0 145,156.1V241H104Z',
+    'M183,141.5A112,112 0 0 0 223,99.3V207H183Z',
+  ];
+  function lunaPartes({ relleno = LU, contorno = '', grosor = 0 } = {}) {
+    const trazo = contorno ? ` stroke="${contorno}" stroke-width="${grosor}" stroke-linejoin="round"` : '';
+    return `<g class="luna-logo">${LUNA_LOGO.map((d) => `<path d="${d}" fill="${relleno}"${trazo}/>`).join('')}</g>`;
+  }
+  function lunaLogo({ clase = '', relleno, contorno, grosor, etiqueta = '' } = {}) {
+    const m = grosor ? grosor : 0, c = LUNA_CAJA;
+    const a11y = etiqueta ? `role="img" aria-label="${etiqueta}"` : 'aria-hidden="true" focusable="false"';
+    return `<svg class="luna-svg ${clase}" viewBox="${c.x - m} ${c.y - m} ${c.w + 2 * m} ${c.h + 2 * m}" ${a11y}>${lunaPartes({ relleno, contorno, grosor })}</svg>`;
   }
 
   /* ================================================================
@@ -572,19 +593,20 @@
       const tam = hoja[0] + r() * (hoja[1] - hoja[0]);
       const llena = r() < relleno;
       const d = f(retraso + m.t * dur);
-      let forma = `<path class="hoja" style="--d:${d}s" d="${hojaD(tam)}" fill="${llena ? T : P}" stroke="${O}" stroke-width="1.3"/>`;
-      if (!llena) forma += `<path class="hoja" style="--d:${d}s" d="M${f(tam * 0.15)},0L${f(tam * 0.78)},0" stroke="${O}" stroke-width="1" fill="none"/>`;
+      // hojas verdes (dos tonos) con nervadura; ramas y zarcillos en café
+      let forma = `<path class="hoja" style="--d:${d}s" d="${hojaD(tam)}" fill="${llena ? V : VC}" stroke="${O}" stroke-width="1.3"/>`;
+      forma += `<path class="hoja" style="--d:${d}s" d="M${f(tam * 0.15)},0L${f(tam * 0.78)},0" stroke="${O}" stroke-width=".9" opacity=".55" fill="none"/>`;
       hojas += `<g transform="translate(${f(m.x)},${f(m.y)}) rotate(${f(ang)})">${forma}</g>`;
       if (r() < zarcillos) {
         const a2 = m.ang * 180 / Math.PI - lado * 70;
-        hojas += `<g transform="translate(${f(m.x)},${f(m.y)}) rotate(${f(a2)})"><path class="hoja" style="--d:${d}s" d="M0,0C4,-5 11,-7 13,-2C15,3 9,6 7,2C6,0 8,-2 9,-1" fill="none" stroke="${O}" stroke-width="1.1" stroke-linecap="round"/></g>`;
+        hojas += `<g transform="translate(${f(m.x)},${f(m.y)}) rotate(${f(a2)})"><path class="hoja" style="--d:${d}s" d="M0,0C4,-5 11,-7 13,-2C15,3 9,6 7,2C6,0 8,-2 9,-1" fill="none" stroke="${C}" stroke-width="1.1" stroke-linecap="round"/></g>`;
       }
       if (r() < flores) {
         const off = lado * -9;
-        hojas += `<g transform="translate(${f(m.x + Math.cos(m.ang + Math.PI / 2) * off)},${f(m.y + Math.sin(m.ang + Math.PI / 2) * off)})"><path class="hoja flor" style="--d:${f(+d + 0.25)}s" d="${destello(0, 0, 5.5, 0.2)}" fill="${T}" stroke="${O}" stroke-width=".8"/></g>`;
+        hojas += `<g transform="translate(${f(m.x + Math.cos(m.ang + Math.PI / 2) * off)},${f(m.y + Math.sin(m.ang + Math.PI / 2) * off)})"><path class="hoja flor" style="--d:${f(+d + 0.25)}s" d="${destello(0, 0, 5.5, 0.2)}" fill="${D}" stroke="${O}" stroke-width=".8"/></g>`;
       }
     });
-    return `<g class="enredadera ${clase}"><path class="tallo" pathLength="1" style="--d:${f(retraso)}s;--dur:${f(dur)}s" d="${trazoSegs(segs)}" fill="none" stroke="${O}" stroke-width="${grosor}" stroke-linecap="round"/>${hojas}</g>`;
+    return `<g class="enredadera ${clase}"><path class="tallo" pathLength="1" style="--d:${f(retraso)}s;--dur:${f(dur)}s" d="${trazoSegs(segs)}" fill="none" stroke="${C}" stroke-width="${grosor}" stroke-linecap="round"/>${hojas}</g>`;
   }
 
   /* ================================================================
@@ -614,8 +636,8 @@
   };
 
   window.Arte = {
-    colores: { T, O, P }, azar, aUri, filtroTinta, destello, hojaD,
-    logo, logoPartes, LOGO_TRIS,
+    colores: { T, O, P, V, VC, C, D, LU }, azar, aUri, filtroTinta, destello, hojaD,
+    logo, logoPartes, HOJAS_LOGO, lunaLogo, lunaPartes, LUNA_CAJA,
     PATRONES, NOMBRES_PATRONES, patron, rayado, OBJETOS, ilustracion, muestra, imagenDeDibujo,
     marcoArco, frisoTile, arquitosTile, enredadera, catmullRom, ICONOS, nuevoId,
     util: { f, pt, lerp },

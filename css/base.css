@@ -1,15 +1,24 @@
 /* ==================================================================
    base.css · Papel, tinta y tipografías compartidas (catálogo y panel)
+   ------------------------------------------------------------------
+   Colores: verde para las hojas y el logo, café para la tinta, las
+   ramas y el techo, y azul solo para la talavera (azulejos y frisos).
    ================================================================== */
 :root {
-  --tinta: #2742b0;
-  --oscura: #17205c;
+  --tinta: #2742b0;          /* azul talavera */
+  --oscura: #3a2a1f;         /* tinta café: textos y contornos */
   --papel: #f4eee1;
   --papel-2: #ebe2cf;
   --papel-3: #fbf8f1;
-  --tinta-suave: rgba(39, 66, 176, 0.1);
-  --linea: rgba(23, 32, 92, 0.18);
-  --sombra: 0 14px 28px -16px rgba(23, 32, 92, 0.45);
+  --verde: #00aa1f;          /* hojas y logo de Inluna */
+  --acento: #16803a;         /* botones y detalles (verde que se lee bien) */
+  --acento-hover: #1a9444;
+  --cafe: #8b5a35;           /* ramas y techo */
+  --dorado: #d99a2b;         /* estrellas y brillos */
+  --luna: #e9decf;           /* la luna de Inluna */
+  --acento-suave: rgba(22, 128, 58, 0.1);
+  --linea: rgba(58, 42, 31, 0.18);
+  --sombra: 0 14px 28px -16px rgba(58, 42, 31, 0.45);
   --f-titulo: 'Fraunces', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
   --f-mano: 'Klee One', 'Segoe Print', 'Bradley Hand', 'Comic Sans MS', cursive;
   --f-ui: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -41,7 +50,7 @@ a { color: inherit; }
 /* Papel punteado, como tu libreta */
 .papel {
   background-color: var(--papel);
-  background-image: radial-gradient(circle, rgba(23, 32, 92, 0.17) 1.05px, transparent 1.55px);
+  background-image: radial-gradient(circle, rgba(58, 42, 31, 0.17) 1.05px, transparent 1.55px);
   background-size: 24px 24px;
   background-position: 12px 12px;
 }
@@ -53,12 +62,10 @@ a { color: inherit; }
 
 .icono { width: 1.25em; height: 1.25em; flex: none; }
 
-/* ---------- Logo (colores por CSS para que siga a config.js) ---------- */
+/* ---------- Logo: las seis hojas (color por CSS para que siga a config.js) ---------- */
 .logo { overflow: visible; }
-.logo .tri-fondo { fill: var(--papel-3); }
-.logo .tri-banda { fill: var(--tinta); }
-.logo .tri-borde { fill: none; stroke: var(--oscura); stroke-width: 2.6; stroke-linejoin: round; }
-.logo .tri-estrella { fill: none; stroke: var(--tinta); }
+.logo .hoja-logo { fill: var(--verde); }
+.luna-svg { overflow: visible; }
 
 /* ---------- Botones ---------- */
 .boton {
@@ -73,9 +80,9 @@ a { color: inherit; }
 }
 .boton:hover { background: #fff; }
 .boton:active { transform: translateY(3px); box-shadow: 0 0 0 var(--oscura); }
-.boton:focus-visible { outline: 3px solid var(--tinta); outline-offset: 3px; }
-.boton-tinta { background: var(--tinta); color: var(--papel-3); }
-.boton-tinta:hover { background: #2f4dc4; }
+.boton:focus-visible { outline: 3px solid var(--acento); outline-offset: 3px; }
+.boton-tinta { background: var(--acento); color: var(--papel-3); }
+.boton-tinta:hover { background: var(--acento-hover); }
 .boton-plano { box-shadow: none; border-color: var(--linea); background: transparent; }
 .boton-plano:active { transform: scale(0.97); }
 .boton[disabled], .boton[aria-disabled='true'] { opacity: 0.55; pointer-events: none; }
@@ -86,7 +93,7 @@ a { color: inherit; }
   transition: transform 0.15s ease, background-color 0.2s ease;
 }
 .boton-icono:active { transform: scale(0.92); }
-.boton-icono:focus-visible { outline: 3px solid var(--tinta); outline-offset: 2px; }
+.boton-icono:focus-visible { outline: 3px solid var(--acento); outline-offset: 2px; }
 
 /* ---------- Avisos (toasts) ---------- */
 .avisos {
@@ -109,17 +116,35 @@ a { color: inherit; }
 @keyframes aparecer { from { opacity: 0; } to { opacity: 1; } }
 @keyframes girar { 0% { transform: rotate(0deg); } 50%, 100% { transform: rotate(360deg); } }
 
-/* Logo girando (carga) */
-.logo-giro .tri { animation: girar 1.8s cubic-bezier(0.65, 0, 0.35, 1) 0.35s infinite both; }
-.logo-giro .tri:nth-child(2) { animation-delay: 0.46s; }
-.logo-giro .tri:nth-child(3) { animation-delay: 0.57s; }
-.logo-giro .tri-borde { stroke-dasharray: 1 1; stroke-dashoffset: 1; animation: trazar 0.6s cubic-bezier(0.6, 0, 0.3, 1) forwards; }
-.logo-giro .tri:nth-child(2) .tri-borde { animation-delay: 0.08s; }
-.logo-giro .tri:nth-child(3) .tri-borde { animation-delay: 0.16s; }
-.logo-giro .tri-banda { opacity: 0; animation: aparecer 0.35s ease 0.35s forwards; }
-.logo-giro.quieto .tri { animation: none; }
+/* Logo de carga: las hojas se abren una a una y luego giran de a un
+   sexto de vuelta (cada paso termina igual que el logo quieto) */
+.logo-giro .hojas-logo {
+  transform-box: view-box; transform-origin: 50% 50%;
+  animation: girar-hojas 3s cubic-bezier(0.65, 0, 0.35, 1) 0.55s infinite;
+}
+.logo-giro .hoja-logo {
+  transform-box: view-box; transform-origin: 50% 50%;
+  opacity: 0; scale: 0.35; animation: hoja-abre 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.25) forwards;
+}
+.logo-giro .hoja-logo:nth-child(2) { animation-delay: 0.05s; }
+.logo-giro .hoja-logo:nth-child(3) { animation-delay: 0.1s; }
+.logo-giro .hoja-logo:nth-child(4) { animation-delay: 0.15s; }
+.logo-giro .hoja-logo:nth-child(5) { animation-delay: 0.2s; }
+.logo-giro .hoja-logo:nth-child(6) { animation-delay: 0.25s; }
+.logo-giro.quieto .hojas-logo { animation: none; }
+@keyframes hoja-abre { to { opacity: 1; scale: 1; } }
+@keyframes girar-hojas {
+  0% { transform: rotate(0deg); }
+  16.667% { transform: rotate(60deg); }
+  33.333% { transform: rotate(120deg); }
+  50% { transform: rotate(180deg); }
+  66.667% { transform: rotate(240deg); }
+  83.333% { transform: rotate(300deg); }
+  100% { transform: rotate(360deg); }
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
-  .logo-giro .tri { animation: none !important; }
+  .logo-giro .hojas-logo { animation: none !important; }
+  .logo-giro .hoja-logo { animation: none !important; opacity: 1; scale: 1; }
 }

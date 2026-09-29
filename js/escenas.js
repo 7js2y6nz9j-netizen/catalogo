@@ -1,18 +1,21 @@
 /* ==================================================================
    escenas.js · La fachada del taller (simétrica) y las piezas del
    interior. Todo el dibujo gira alrededor de un eje central x = 320:
-   luna → ▽ del frontón → letrero → puertas → camino.
+   luna de Inluna → hojas del frontón → letrero → puertas → camino.
    ------------------------------------------------------------------
-   De tu boceto: techo con aleros curvos y tejas punteadas azules, el ▽
-   en el frontón, puertas dobles azules y tu friso de arcos y estrellas.
+   De tu boceto: techo con aleros curvos (café, con tejas), el logo de
+   hojas en el frontón, puertas de madera con incrustaciones de talavera
+   y tu friso de arcos y estrellas. El azul queda solo en la talavera.
    ================================================================== */
 (function () {
   'use strict';
   const A = window.Arte;
-  const { T, O, P } = A.colores;
+  const { T, O, P, V, VC, C, D, LU } = A.colores;
   const { f } = A.util;
   const CFG = window.INLUNA_CONFIG || {};
   const LUZ = '#fff1c4';
+  // Tonos de café para el techo y la madera (el azul queda solo en la talavera)
+  const TECHO = '#c79464', TECHO_CLARO = '#e8cda6', MADERA = '#ad7b50', FOLLAJE = '#d6eacb';
 
   const W = 640, H = 520, CX = 320, SUELO = 478;
   const eje = (x) => 2 * CX - x;
@@ -23,7 +26,7 @@
   const FACHADA = {
     W, H, CX, SUELO,
     puerta: { x: 222, y: 304, w: 196, h: 174 },
-    logo: { x: 297, y: 100, w: 46 },
+    logo: { x: 295, y: 96, w: 50 },
     ventanas: [{ x: 95, y: 305, w: 58, h: 107 }, { x: 487, y: 305, w: 58, h: 107 }],
     faroles: [{ x: 164, y: 284, w: 40, h: 78 }, { x: 436, y: 284, w: 40, h: 78 }],
     macetas: [{ x: 158, y: 372, w: 56, h: 106 }, { x: 426, y: 372, w: 56, h: 106 }],
@@ -56,7 +59,7 @@
     };
   })();
 
-  /* Tejas: filas de guiones azules, en espejo para que sean simétricas */
+  /* Tejas: filas de guiones café, en espejo para que sean simétricas */
   function tejas(r) {
     let d = '';
     [166, 182, 198, 214, 228].forEach((y, fila) => {
@@ -74,7 +77,7 @@
         x -= largo + hueco + r() * 3;
       }
     });
-    return `<path d="${d}" stroke="${T}" stroke-width="2.8"/>`;
+    return `<path d="${d}" stroke="${C}" stroke-width="2.8"/>`;
   }
 
   /* Tu friso de arcos y estrellas, de esquina a esquina bajo el alero */
@@ -149,15 +152,15 @@
       `<rect x="264" y="244" width="112" height="42" rx="6" stroke="${T}" stroke-width="1.4"/>` +
       `<path d="${A.destello(276, 265, 4.6, 0.2)}" fill="${T}" stroke="none"/><path d="${A.destello(364, 265, 4.6, 0.2)}" fill="${T}" stroke="none"/>`;
     // ----- falda del techo con tejas -----
-    casa += `<path d="${FALDA}" fill="${P}" stroke="none"/>` + tejas(r) + `<path d="${FALDA}"/>`;
+    casa += `<path d="${FALDA}" fill="${TECHO}" stroke="none"/>` + tejas(r) + `<path d="${FALDA}"/>`;
     casa += `<path d="M60,236C58,239 59,242 63,244H577C581,242 582,239 580,236" stroke-width="2"/>`;
     // ----- frontón (con curva de pagoda) -----
-    casa += `<path d="M186,146C268,128 311,72 320,34C329,72 372,128 454,146L440,150H200Z" fill="${P}" stroke="none"/>`;
+    casa += `<path d="M186,146C268,128 311,72 320,34C329,72 372,128 454,146L440,150H200Z" fill="${TECHO_CLARO}" stroke="none"/>`;
     casa += `<path d="M320,34C311,72 268,128 186,146C181,147 178,145 176,141"/>`;
     casa += `<path d="M320,34C329,72 372,128 454,146C459,147 462,145 464,141"/>`;
     casa += `<path d="M320,50C312,84 272,134 200,150M320,50C328,84 368,134 440,150" stroke-width="2"/>`;
     casa += `<path d="M200,150H440" stroke-width="2.2"/>`;
-    casa += `<path d="${A.destello(CX, 22, 7.5, 0.18)}" fill="${T}" stroke-width="1.6"/>`;
+    casa += `<path d="${A.destello(CX, 22, 7.5, 0.18)}" fill="${D}" stroke-width="1.6"/>`;
 
     // ----- suelo -----
     let suelo = `<path d="M-700,${SUELO + 1}C-300,${SUELO - 2} 100,${SUELO + 2} ${CX},${SUELO}C540,${SUELO - 2} 940,${SUELO + 2} 1340,${SUELO + 1}" stroke-width="2.6"/>`;
@@ -186,10 +189,10 @@
     const ajuste = largo > 8 ? ` textLength="84" lengthAdjust="spacingAndGlyphs"` : '';
     s += `<text class="fz-letrero" x="${CX}" y="274" text-anchor="middle" fill="${O}"${ajuste}>${escapar(nombre)}</text></svg>`;
 
-    // ----- capa viva: el ▽ del frontón y las enredaderas -----
+    // ----- capa viva: las hojas de Inluna en el frontón y las enredaderas -----
     const L = FACHADA.logo;
     let v = abrir('fachada-viva') +
-      `<g class="fz-logo" transform="translate(${L.x},${L.y}) scale(${L.w / 100})"><rect width="100" height="88" fill="none" stroke="none"/>${A.logoPartes()}</g>`;
+      `<g class="fz-logo" transform="translate(${L.x},${L.y}) scale(${L.w / 100})"><rect width="100" height="100" fill="none" stroke="none"/>${A.logoPartes()}</g>`;
     let enr = '';
     const par = (pts, op) => {
       enr += A.enredadera(pts, op);
@@ -212,13 +215,16 @@
 
   /* ---------- piezas que se pueden tocar ---------- */
   function hojaPuerta() {
+    // madera café con incrustaciones de talavera (arco con estrella y panel de puntos)
     const w = 98, h = 174, cx = 49, cy = 54, R1 = 32, R2 = 26;
-    let s = `<rect x="1.5" y="1.5" width="${w - 3}" height="${h - 3}" fill="${P}" stroke="${T}" stroke-width="3"/>`;
-    s += `<path d="M${cx - R1},96V${cy}A${R1},${R1} 0 0 1 ${cx + R1},${cy}V96Z" fill="${P}" stroke="${T}" stroke-width="2.6"/>`;
+    let s = `<rect x="1.5" y="1.5" width="${w - 3}" height="${h - 3}" fill="${MADERA}" stroke="${O}" stroke-width="3"/>`;
+    s += `<path d="M8,8V${h - 8}M${w - 8},8V${h - 8}" stroke="${C}" stroke-width="1.2" opacity=".6"/>`;
+    s += `<path d="M${cx - R1},96V${cy}A${R1},${R1} 0 0 1 ${cx + R1},${cy}V96Z" fill="${P}" stroke="${O}" stroke-width="2.6"/>`;
     s += `<path d="M${cx},${cy - R1}A${R1},${R1} 0 0 1 ${cx + R1},${cy}V96H${cx + R2}V${cy}A${R2},${R2} 0 0 0 ${cx},${cy - R2}Z" fill="${T}"/>`;
     s += `<path d="M${cx - R2},96V${cy}A${R2},${R2} 0 0 1 ${cx + R2},${cy}V96" fill="none" stroke="${T}" stroke-width="1.3"/>`;
     s += `<path d="${A.destello(cx - 3, cy + 9, 12, 0.16)}" fill="${T}"/>`;
-    s += `<rect x="16" y="106" width="66" height="56" rx="2" fill="none" stroke="${T}" stroke-width="2.4"/>`;
+    s += `<rect x="16" y="106" width="66" height="56" rx="2" fill="${P}" stroke="${O}" stroke-width="2.4"/>`;
+    s += `<rect x="20" y="110" width="58" height="48" rx="1" fill="none" stroke="${T}" stroke-width="1.4"/>`;
     for (let j = 0; j < 3; j++) {
       for (let i = 0; i < 4; i++) s += `<circle cx="${f(26 + i * 15 + (j % 2) * 7.5 - 3.75)}" cy="${f(119 + j * 15)}" r="${j % 2 ? 1.6 : 2.4}" fill="${T}"/>`;
     }
@@ -231,8 +237,7 @@
     const w = 196, h = 174, c = w / 2;
     let s = `<defs><radialGradient id="hueco-luz" cx="50%" cy="38%" r="75%"><stop offset="0" stop-color="#fffdf6"/><stop offset=".6" stop-color="${P}"/><stop offset="1" stop-color="#e2d3b3"/></radialGradient></defs>`;
     s += `<rect width="${w}" height="${h}" fill="url(#hueco-luz)"/>`;
-    s += `<circle cx="${c}" cy="38" r="21" fill="${T}" stroke="${O}" stroke-width="1.6"/><circle cx="${c}" cy="38" r="25" fill="none" stroke="${O}" stroke-width="1.2"/>`;
-    s += `<g transform="translate(${c},42) rotate(90)"><path d="M0,-9A9,9 0 0 1 0,9A5,9 0 0 0 0,-9Z" fill="${P}"/></g>`;
+    s += `<g transform="translate(${c - 24},14) scale(.48)">${A.logoPartes()}</g>`;
     s += `<path d="M0,138H${w}V${h}H0Z" fill="#eadcbf"/><path d="M0,138H${w}" stroke="${O}" stroke-width="1.2" opacity=".5"/>`;
     for (let k = -4; k <= 4; k++) s += `<path d="M${c + k * 14},138L${c + k * 60},${h}" stroke="${O}" stroke-width="1" opacity=".2"/>`;
     [[36, 30, 0], [c, 40, 1], [w - 36, 30, 2]].forEach(([x, ancho, i]) => {
@@ -242,7 +247,7 @@
         `<path d="${A.destello(x, y + alto * 0.45, ancho * 0.16, 0.2)}" fill="${P}"/></g>`;
     });
     [c - 42, c + 42].forEach((x) => {
-      s += `<path d="M${x},0V12" stroke="${O}" stroke-width="1.1"/><path d="M${x - 9},22Q${x - 8},12 ${x},12Q${x + 8},12 ${x + 9},22Z" fill="${T}" stroke="${O}" stroke-width="1.2"/><circle cx="${x}" cy="25" r="2.6" fill="#fff9e8"/>`;
+      s += `<path d="M${x},0V12" stroke="${O}" stroke-width="1.1"/><path d="M${x - 9},22Q${x - 8},12 ${x},12Q${x + 8},12 ${x + 9},22Z" fill="${C}" stroke="${O}" stroke-width="1.2"/><circle cx="${x}" cy="25" r="2.6" fill="#fff9e8"/>`;
     });
     return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true" focusable="false">${s}</svg>`;
   }
@@ -256,7 +261,7 @@
       `<rect class="vl-apagada" width="58" height="107" fill="${O}"/>` +
       `<path d="M4,78H54" stroke="${O}" stroke-width="2" opacity=".55"/>` +
       `<path d="M13,78V66Q13,58 19,58Q25,58 25,66V78Z M31,78V70Q31,62 38,60Q45,62 45,70V78Z" fill="${T}" opacity=".7"/>` +
-      `<path class="vl-destello" d="${A.destello(29, 34, 6, 0.2)}" fill="${T}" opacity=".45"/></svg>`;
+      `<path class="vl-destello" d="${A.destello(29, 34, 6, 0.2)}" fill="${D}" opacity=".6"/></svg>`;
   }
 
   /* Farol de papel colgante */
@@ -265,8 +270,8 @@
       `<path d="M20,0V16" stroke="${O}" stroke-width="1.5"/>` +
       `<path d="M13,16H27L29,21H11Z" fill="${O}"/>` +
       `<path d="M11,21C3,26 2,50 11,56H29C38,50 37,26 29,21Z" fill="${P}" stroke="${O}" stroke-width="2"/>` +
-      `<path d="M7,30H33M5,38H35M6,46H34" stroke="${T}" stroke-width="1.4" fill="none"/>` +
-      `<path d="${A.destello(20, 38, 6, 0.2)}" fill="${T}"/>` +
+      `<path d="M7,30H33M5,38H35M6,46H34" stroke="${C}" stroke-width="1.4" fill="none"/>` +
+      `<path d="${A.destello(20, 38, 6, 0.2)}" fill="${D}" stroke="${O}" stroke-width=".8"/>` +
       `<path d="M11,56H29L27,61H13Z" fill="${O}"/>` +
       `<path d="M20,61V72M17,72H23" stroke="${T}" stroke-width="1.6"/></svg>`;
   }
@@ -288,21 +293,21 @@
       `<g class="mc-planta">${hojas}</g>` +
       `<g class="mc-flor" style="transform-origin:${c}px ${yT - 40}px">` +
       [0, 72, 144, 216, 288].map((a) => `<ellipse cx="${c}" cy="${yT - 47}" rx="4" ry="6.5" transform="rotate(${a} ${c} ${yT - 40})" fill="${P}" stroke="${O}" stroke-width="1.2"/>`).join('') +
-      `<circle cx="${c}" cy="${yT - 40}" r="3.4" fill="${T}"/></g>` +
+      `<circle cx="${c}" cy="${yT - 40}" r="3.4" fill="${D}"/></g>` +
       `<path d="${cuerpo}" fill="${P}" stroke="${O}" stroke-width="2"/>${deco}` +
       `<path d="M${c - 19},${yT}H${c + 19}V${yT + 8}H${c - 19}Z" fill="${T}" stroke="${O}" stroke-width="2"/></svg>`;
   }
 
-  /* Luna en forma de barca (con las puntas hacia arriba: simétrica) */
+  /* La luna de Inluna (tu logo de media luna con patas) delante de las
+     seis hojas verdes, que hacen de círculo de fondo y giran despacio */
   function luna() {
-    const c = 70, r = 44;
+    const c = 70, lado = 132, k = 0.34;
+    const L = A.LUNA_CAJA, lw = L.w * k, lh = L.h * k;
     return `<svg viewBox="0 0 140 140" aria-hidden="true" focusable="false" overflow="visible">` +
       `<defs><radialGradient id="halo-luna"><stop offset="0" stop-color="#fff7da" stop-opacity=".95"/><stop offset=".5" stop-color="#fff7da" stop-opacity=".4"/><stop offset="1" stop-color="#fff7da" stop-opacity="0"/></radialGradient></defs>` +
       `<circle class="luna-halo" cx="${c}" cy="${c}" r="70" fill="url(#halo-luna)"/>` +
-      `<circle class="luna-llena" cx="${c}" cy="${c}" r="${r}" fill="#fffaf0" stroke="${O}" stroke-width="1.4"/>` +
-      `<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${O}" stroke-width="1.4" stroke-dasharray="2 6" opacity=".5"/>` +
-      `<g transform="rotate(90 ${c} ${c})"><path d="M${c},${c - r}A${r},${r} 0 0 1 ${c},${c + r}A${f(r * 0.56)},${r} 0 0 0 ${c},${c - r}Z" fill="${T}" stroke="${O}" stroke-width="2.4" stroke-linejoin="round"/></g>` +
-      `<path d="M${f(c - r * 0.55)},${f(c + r * 0.66)}Q${c},${f(c + r * 0.82)} ${f(c + r * 0.55)},${f(c + r * 0.66)}" stroke="${P}" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".7"/>` +
+      `<g class="luna-hojas"><g class="luna-hojas-toque"><g transform="translate(${c - lado / 2},${c - lado / 2}) scale(${lado / 100})">${A.logoPartes()}</g></g></g>` +
+      `<g class="luna-frente"><g transform="translate(${f(c - lw / 2)},${f(c - lh / 2 + 2)}) scale(${k}) translate(${-L.x},${-L.y})">${A.lunaPartes({ contorno: O, grosor: 2.2 / k })}</g></g>` +
       `</svg>`;
   }
 
@@ -314,7 +319,7 @@
     for (let i = 0; i < n; i++) {
       const x = 10 + r() * (ancho - 20), y = 10 + r() * (alto - 20);
       if (r() < 0.45) s += `<circle cx="${f(x)}" cy="${f(y)}" r="${f(1.2 + r())}" fill="${O}"/>`;
-      else chispas += `<path class="chispa" style="--i:${i}" d="${A.destello(x, y, 3 + r() * 5, 0.18)}" fill="${r() < 0.5 ? T : 'none'}" stroke="${O}" stroke-width="1.2" stroke-linejoin="round"/>`;
+      else chispas += `<path class="chispa" style="--i:${i}" d="${A.destello(x, y, 3 + r() * 5, 0.18)}" fill="${r() < 0.5 ? D : 'none'}" stroke="${O}" stroke-width="1.2" stroke-linejoin="round"/>`;
     }
     return `<svg viewBox="0 0 ${f(ancho)} ${f(alto)}" preserveAspectRatio="none" aria-hidden="true" focusable="false">${s}${chispas}</svg>`;
   }
@@ -328,14 +333,14 @@
   /* Arbustos del primer plano (el derecho es el mismo, en espejo) */
   function arbusto() {
     const r = A.azar('arbusto');
-    let s = `<path d="M0,110C0,74 18,56 42,58C52,32 90,26 106,48C122,36 150,46 152,72C160,82 160,98 160,110Z" fill="${P}" stroke="${O}" stroke-width="2.4" stroke-linejoin="round"/>`;
+    let s = `<path d="M0,110C0,74 18,56 42,58C52,32 90,26 106,48C122,36 150,46 152,72C160,82 160,98 160,110Z" fill="${FOLLAJE}" stroke="${O}" stroke-width="2.4" stroke-linejoin="round"/>`;
     let hojas = '';
     for (let k = 0; k < 22; k++) {
       const x = 16 + r() * 128, y = 58 + r() * 46;
       const ang = -90 + (x - 80) * 0.9 + (r() - 0.5) * 50;
-      hojas += `<path transform="translate(${f(x)},${f(y)}) rotate(${f(ang)})" d="${A.hojaD(10 + r() * 7)}" fill="${r() < 0.55 ? T : P}" stroke="${O}" stroke-width="1.1"/>`;
+      hojas += `<path transform="translate(${f(x)},${f(y)}) rotate(${f(ang)})" d="${A.hojaD(10 + r() * 7)}" fill="${r() < 0.55 ? V : VC}" stroke="${O}" stroke-width="1.1"/>`;
     }
-    [[52, 70], [100, 58], [128, 86]].forEach(([x, y]) => { hojas += `<path d="${A.destello(x, y, 5.5, 0.2)}" fill="${T}" stroke="${O}" stroke-width=".8"/>`; });
+    [[52, 70], [100, 58], [128, 86]].forEach(([x, y]) => { hojas += `<path d="${A.destello(x, y, 5.5, 0.2)}" fill="${D}" stroke="${O}" stroke-width=".8"/>`; });
     let trama = '';
     for (let x = 118; x < 160; x += 6) trama += `M${x},110L${x + 10},72`;
     return `<svg viewBox="0 0 160 110" preserveAspectRatio="xMinYMax meet" aria-hidden="true" focusable="false">${s}<path d="${trama}" stroke="${O}" stroke-width="1.3" opacity=".22"/>${hojas}</svg>`;
@@ -378,6 +383,11 @@
       `<defs>${A.filtroTinta('tinta-luna', { escala: 2.2, frecuencia: 0.03, semilla: 5 })}</defs><g filter="url(#tinta-luna)">${ventanaLuna(R)}</g></svg>`;
   }
 
+  /* El círculo de fondo del interior: el logo de hojas de Inluna, grande */
+  function hojasFondoSVG() {
+    return `<svg viewBox="-4 -4 108 108" aria-hidden="true" focusable="false"><g class="hojas-fondo">${A.logoPartes()}</g></svg>`;
+  }
+
   /* Lámpara colgante del interior (largo = cordón) */
   function lampara(largo = 40) {
     const x = 30, y = largo;
@@ -385,7 +395,7 @@
       `<defs><radialGradient id="luz-lampara-${largo}"><stop offset="0" stop-color="${LUZ}" stop-opacity=".95"/><stop offset=".45" stop-color="${LUZ}" stop-opacity=".45"/><stop offset="1" stop-color="${LUZ}" stop-opacity="0"/></radialGradient></defs>` +
       `<circle class="lp-luz" cx="${x}" cy="${y + 38}" r="48" fill="url(#luz-lampara-${largo})"/>` +
       `<path d="M${x},0V${y}" stroke="${O}" stroke-width="1.6"/>` +
-      `<path d="M${x - 21},${y + 25}Q${x - 19},${y} ${x},${y}Q${x + 19},${y} ${x + 21},${y + 25}Z" fill="${T}" stroke="${O}" stroke-width="2"/>` +
+      `<path d="M${x - 21},${y + 25}Q${x - 19},${y} ${x},${y}Q${x + 19},${y} ${x + 21},${y + 25}Z" fill="${C}" stroke="${O}" stroke-width="2"/>` +
       `<path d="M${x - 13},${y + 10}Q${x},${y + 5} ${x + 13},${y + 10}M${x - 17},${y + 18}Q${x},${y + 13} ${x + 17},${y + 18}" stroke="${P}" stroke-width="1.4" fill="none" opacity=".7"/>` +
       `<path d="M${x - 21},${y + 25}H${x + 21}" stroke="${O}" stroke-width="2"/>` +
       `<circle cx="${x}" cy="${y + 30}" r="5" fill="#fff8e6" stroke="${O}" stroke-width="1.4"/></svg>`;
@@ -394,8 +404,8 @@
   /* Pilar entre arcos: la estrella con puntitos de tu friso */
   function pilar() {
     return `<svg viewBox="0 0 40 60" aria-hidden="true" focusable="false">` +
-      `<path d="${A.destello(20, 30, 13, 0.18)}" fill="none" stroke="${O}" stroke-width="1.8" stroke-linejoin="round"/>` +
-      [[6, 12], [34, 12], [6, 48], [34, 48]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.8" fill="${O}"/>`).join('') + `</svg>`;
+      `<path d="${A.destello(20, 30, 13, 0.18)}" fill="none" stroke="${T}" stroke-width="1.8" stroke-linejoin="round"/>` +
+      [[6, 12], [34, 12], [6, 48], [34, 48]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.8" fill="${T}"/>`).join('') + `</svg>`;
   }
 
   /* Enredadera que cuelga del friso (lado: 1 izquierda, -1 derecha) */
@@ -412,6 +422,6 @@
 
   window.Escenas = {
     FACHADA, caja, fachada, hojaPuerta, huecoPuerta, luzVentana, farol, maceta, luna, estrellas, nube, arbusto,
-    ventanaLuna, ventanaLunaSVG, lampara, pilar, enredaderaColgante, escapar,
+    ventanaLuna, ventanaLunaSVG, hojasFondoSVG, lampara, pilar, enredaderaColgante, escapar,
   };
 })();

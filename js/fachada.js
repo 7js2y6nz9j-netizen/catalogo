@@ -3,7 +3,7 @@
    ------------------------------------------------------------------
    · Mover el dedo / el mouse / inclinar el teléfono → profundidad
    · Tocar el cielo → brotan destellos (y una notita si hay sonido)
-   · La luna brilla y cruza una estrella fugaz
+   · La luna de Inluna brilla, sus hojas giran y cruza una estrella fugaz
    · Faroles que se mecen, ventanas que se encienden, macetas que florecen
    · Las puertas se abren deslizando el dedo (o con un toque)
    ================================================================== */
@@ -38,7 +38,7 @@
             <p class="entrada-pista2">✦ toca la luna, las ventanas y los faroles ✦</p>
           </header>
           <div class="cielo capa" data-prof="0.45">
-            <button class="luna" type="button" aria-label="Tocar la luna">${E.luna()}</button>
+            <button class="luna" type="button" aria-label="Tocar la luna de Inluna">${E.luna()}</button>
           </div>
           <div class="casa capa" data-prof="0.7">
             <div class="puertas" style="${E.caja(F.puerta)}">

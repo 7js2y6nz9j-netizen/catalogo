@@ -22,10 +22,15 @@ window.INLUNA_CONFIG = {
   moneda: 'MXN',  // MXN, USD, COP, ARS, CLP, PEN, EUR...
   mensajeWhatsApp: '¡Hola! Me interesa {pieza} ({precio}) que vi en tu catálogo: {enlace}',
 
-  // 3) Colores de la tinta y del papel
+  // 3) Colores (el azul queda solo para la talavera)
   colores: {
-    tinta: '#2742b0',   // azul cobalto
-    oscura: '#17205c',  // azul casi negro (contornos y textos)
+    verde: '#00aa1f',   // hojas y logo de Inluna
+    acento: '#16803a',  // botones y detalles (un verde que se lee bien)
+    cafe: '#8b5a35',    // ramas y techo
+    oscura: '#3a2a1f',  // tinta café (contornos y textos)
+    tinta: '#2742b0',   // azul talavera (azulejos, frisos, macetas y marcos)
+    dorado: '#d99a2b',  // estrellas y flores
+    luna: '#e9decf',    // la luna de Inluna
     papel: '#f4eee1',   // crema
   },
 };

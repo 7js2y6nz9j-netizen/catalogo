@@ -28,7 +28,7 @@
 .anim-capa { position: absolute; pointer-events: none; z-index: 1; }
 .anim-capa svg { width: 100%; height: 100%; overflow: visible; }
 .anim-capa.vapor { left: 31%; top: 2%; width: 34%; height: 33%; }
-.vapor path { fill: none; stroke: var(--tinta); stroke-width: 3; stroke-linecap: round; opacity: 0; animation: vapor 2.1s ease-out infinite; }
+.vapor path { fill: none; stroke: var(--oscura); stroke-width: 3; stroke-linecap: round; opacity: 0; animation: vapor 2.1s ease-out infinite; }
 .vapor .v2 { animation-delay: 0.7s; }
 .vapor .v3 { animation-delay: 1.4s; }
 @keyframes vapor {
@@ -38,13 +38,13 @@
 }
 .anim-capa.llama { left: 41%; top: 4%; width: 18%; height: 18%; }
 .llama path { transform-box: fill-box; transform-origin: 50% 100%; }
-.llama .ll-a { fill: var(--tinta); stroke: var(--oscura); stroke-width: 1.4; animation: llama 0.7s ease-in-out infinite alternate; }
+.llama .ll-a { fill: var(--dorado); stroke: var(--oscura); stroke-width: 1.4; animation: llama 0.7s ease-in-out infinite alternate; }
 .llama .ll-b { fill: #fff3c4; animation: llama 0.5s ease-in-out infinite alternate-reverse; }
 @keyframes llama { from { transform: scale(1, 1) skewX(-4deg); } to { transform: scale(0.9, 1.12) skewX(4deg); } }
 .anim-capa.hoja {
   right: 3%; bottom: 2%; width: 30%; aspect-ratio: 1; transform-origin: 100% 100%;
   background: linear-gradient(135deg, rgba(0, 0, 0, 0) 49%, #fffdf6 50%, #e7dcc4 100%);
-  clip-path: polygon(100% 0, 100% 100%, 0 100%); filter: drop-shadow(-2px -2px 2px rgba(23, 32, 92, 0.3));
+  clip-path: polygon(100% 0, 100% 100%, 0 100%); filter: drop-shadow(-2px -2px 2px rgba(58, 42, 31, 0.3));
   animation: pagina 2.6s ease-in-out infinite;
 }
 @keyframes pagina { 0%, 50%, 100% { transform: scale(0.12); } 66% { transform: scale(1); } 82% { transform: scale(0.85); } }
@@ -54,7 +54,7 @@
 }
 @keyframes brillo { 0%, 55% { transform: translateX(-130%); } 100% { transform: translateX(130%); } }
 .anim-capa.flores { left: 26%; top: 1%; width: 48%; height: 24%; }
-.flores path { fill: var(--tinta); transform-box: fill-box; transform-origin: center; animation: flor-brota 2.2s ease-in-out infinite; }
+.flores path { fill: var(--dorado); stroke: var(--oscura); stroke-width: 1; transform-box: fill-box; transform-origin: center; animation: flor-brota 2.2s ease-in-out infinite; }
 .flores .f2 { animation-delay: 0.35s; }
 .flores .f3 { animation-delay: 0.7s; }
 @keyframes flor-brota { 0%, 100% { transform: scale(0) rotate(0); } 35%, 70% { transform: scale(1) rotate(45deg); } }

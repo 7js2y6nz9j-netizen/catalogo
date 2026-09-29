@@ -6,7 +6,7 @@
    2. Colección: se abre "desde" su arco; las piezas flotan en fila.
    3. Pieza: ficha inmersiva con la FOTO ORIGINAL (en el catálogo
       se ve la versión dibujada con el estilo del taller).
-   4. Contacto: panel de noche con luna, olas y azulejos.
+   4. Contacto: panel verde con la luna de Inluna, olas y azulejos.
    Cada pieza tiene una animación de uso: vapor, balanceo, giro…
    ================================================================== */
 (function () {
@@ -44,7 +44,7 @@
     if (!g.construido) {
       g.construido = true;
       $('.t-friso', t).style.backgroundImage = `url("${A.aUri(A.frisoTile())}")`;
-      $('.t-luna', t).innerHTML = `<button class="t-luna-boton" type="button" aria-label="La ventana de la luna">${E.ventanaLunaSVG(150)}</button>`;
+      $('.t-luna', t).innerHTML = `<button class="t-luna-boton" type="button" aria-label="Las hojas de Inluna">${E.hojasFondoSVG()}</button>`;
       $('.t-lamparas', t).innerHTML = [0, 1].map((i) => `<button class="t-lampara ${i ? 'der' : 'izq'}" type="button" aria-label="Mover la lámpara">${E.lampara(40)}</button>`).join('');
       $('.t-enredaderas', t).innerHTML = `<span class="t-enr izq">${E.enredaderaColgante(170, 1, 61)}</span><span class="t-enr der">${E.enredaderaColgante(170, 1, 61)}</span>`;
       g.arcada = $('.arcada', t);
@@ -402,7 +402,7 @@
   });
 
   /* ================================================================
-     4 · CONTACTO (panel de noche con luna, olas y azulejos)
+     4 · CONTACTO (panel verde con la luna de Inluna, olas y azulejos)
      ================================================================ */
   function panelContacto() {
     const a = estado.ajustes, wa = I.enlaceWhatsApp(), ig = I.enlaceInstagram();
@@ -415,7 +415,7 @@
       <div class="contacto-noche">
         <div class="contacto-festones" aria-hidden="true"></div>
         ${estrellasC}
-        <svg class="contacto-luna" viewBox="0 0 80 80" aria-hidden="true"><g transform="rotate(90 40 40)"><path d="M40,12A28,28 0 0 1 40,68A16,28 0 0 0 40,12Z"/></g><circle cx="40" cy="40" r="28" fill="none" stroke-dasharray="2 6"/></svg>
+        <div class="contacto-emblema" aria-hidden="true">${A.logo({ clase: 'contacto-hojas' })}${A.lunaLogo({ clase: 'contacto-luna', contorno: A.colores.O, grosor: 6 })}</div>
         <p class="contacto-antes">¿te gustó algo?</p>
         <h2 class="contacto-titulo">Hagamos tu pedido</h2>
         <p class="contacto-texto">Escríbeme para pedidos, encargos o piezas personalizadas. Te respondo en cuanto salga del taller.</p>

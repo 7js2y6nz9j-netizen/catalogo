@@ -70,17 +70,16 @@
 
   /* ---------- cargador ---------- */
   function esperarReposo(svg) {
-    // espera a que los tres triángulos terminen su vuelta (así no "saltan")
-    const tris = svg.querySelectorAll('.tri');
-    const anim = (el) => (el && el.getAnimations ? el.getAnimations().find((a) => a.animationName === 'girar') : null);
-    const a0 = anim(tris[0]), a2 = anim(tris[tris.length - 1]);
-    if (!a0 || a0.currentTime == null) return Promise.resolve();
-    const t0 = a0.effect.getTiming(), t2 = a2 ? a2.effect.getTiming() : t0;
-    const t = a0.currentTime - (t0.delay || 0);
+    // espera a que las hojas terminen su sexto de vuelta (así no "saltan":
+    // cada 60° el logo se ve igual que quieto)
+    const g = svg.querySelector('.hojas-logo');
+    const a = g && g.getAnimations ? g.getAnimations().find((x) => x.animationName === 'girar-hojas') : null;
+    if (!a || a.currentTime == null) return Promise.resolve();
+    const tm = a.effect.getTiming();
+    const t = a.currentTime - (tm.delay || 0);
     if (t < 0) return Promise.resolve();
-    const fase = t % t0.duration;
-    const reposo = t0.duration / 2 + ((t2.delay || 0) - (t0.delay || 0)) + 40;
-    return espera(fase < reposo ? reposo - fase : 0);
+    const paso = tm.duration / 6, fase = t % paso;
+    return espera(fase < 30 ? 0 : paso - fase + 20);
   }
 
   async function cargadorAlFronton() {

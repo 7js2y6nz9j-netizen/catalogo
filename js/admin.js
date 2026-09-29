@@ -23,13 +23,13 @@
   /* ---------- colores e íconos ---------- */
   (function () {
     const c = (window.INLUNA_CONFIG || {}).colores || {}, st = document.documentElement.style;
-    if (c.tinta) st.setProperty('--tinta', c.tinta);
-    if (c.oscura) st.setProperty('--oscura', c.oscura);
-    if (c.papel) st.setProperty('--papel', c.papel);
+    ['tinta', 'oscura', 'papel', 'verde', 'acento', 'cafe', 'dorado', 'luna'].forEach((k) => {
+      if (c[k]) st.setProperty(`--${k}`, c[k]);
+    });
   })();
   $$('[data-icono]').forEach((el) => el.insertAdjacentHTML('afterbegin', A.ICONOS[el.dataset.icono] || ''));
   $('#cargando-logo').innerHTML = A.logo({ clase: 'logo-giro' });
-  $('#acceso-logo').innerHTML = A.logo({ estrellas: true, trama: true });
+  $('#acceso-logo').innerHTML = A.logo();
   $('#barra-logo').innerHTML = A.logo();
   if (D.modoPrueba) $$('[data-prueba]').forEach((el) => { el.hidden = false; });
 

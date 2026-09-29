@@ -2,6 +2,7 @@
 
 > **Ya está en línea y conectado a tu hoja de Google:**
 > - Catálogo (para Instagram): **https://7js2y6nz9j-netizen.github.io/catalogo/**
+>   (la dirección corta **https://7js2y6nz9j-netizen.github.io** también lleva al catálogo; la redirección vive en el repositorio `7js2y6nz9j-netizen.github.io`, carpeta `inluna-inicio` en tu computadora)
 > - Tu panel (entra con tu clave): **https://7js2y6nz9j-netizen.github.io/catalogo/admin.html**
 > - Tus piezas se guardan en la hoja **"Catálogo Inluna"** de tu Google Drive y las fotos en la carpeta **"Inluna · fotos del catálogo"**.
 >

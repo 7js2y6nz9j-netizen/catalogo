@@ -415,7 +415,7 @@
       <div class="contacto-noche">
         <div class="contacto-festones" aria-hidden="true"></div>
         ${estrellasC}
-        <div class="contacto-emblema" aria-hidden="true">${A.logo({ clase: 'contacto-hojas' })}${A.lunaLogo({ clase: 'contacto-luna', contorno: A.colores.O, grosor: 6 })}</div>
+        <div class="contacto-emblema" aria-hidden="true">${A.logo({ clase: 'contacto-hojas' })}</div>
         <p class="contacto-antes">¿te gustó algo?</p>
         <h2 class="contacto-titulo">Hagamos tu pedido</h2>
         <p class="contacto-texto">Escríbeme para pedidos, encargos o piezas personalizadas. Te respondo en cuanto salga del taller.</p>

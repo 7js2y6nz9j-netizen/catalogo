@@ -10,15 +10,17 @@
 
 Tu catálogo en línea, con tu arte:
 
-1. **Carga:** las seis hojas verdes de tu logo se abren una a una, giran y luego vuelan a su lugar en el frontón del taller.
-2. **Entrada (la fachada, simétrica):** las enredaderas crecen y la clienta **desliza o toca las puertas** para entrar. Antes puede jugar con el taller:
-   - la **luna de Inluna** brilla y sus hojas giran, las **ventanas** se encienden y apagan, los **faroles** se mecen y en las **macetas** florece una flor;
-   - las chispitas siguen su dedo, pasan estrellas fugaces y todo se mueve un poco al inclinar el teléfono;
+1. **Carga:** las seis hojas verdes de tu logo se abren una a una, giran y luego vuelan al emblema de la casita.
+2. **Entrada (la fachada):** una casita de ladrillo blanco con la enredadera cayendo desde el techo, un árbol que deja caer sus hojas y sombras de hojas en la pared. La clienta **desliza o toca las puertas** (verdes) para entrar. Antes puede jugar:
+   - el **árbol** se sacude y suelta hojas; los **postigos** de la ventana se abren y cierran; las **celosías de talavera** se iluminan; los **arbolitos** en maceta se sacuden; tu **emblema** (las hojas con la luna de Inluna) gira;
+   - todo se mueve un poco al inclinar el teléfono;
    - sonido opcional (apagado al inicio; botón **sin sonido / sonido** arriba a la derecha).
+   - **La fachada es siempre el inicio:** dentro del taller hay un botón **salir** (arriba a la izquierda) y el botón **atrás** del teléfono también saca por la puerta. Se sale caminando hacia atrás por la puerta, que se cierra, y se puede volver a entrar cuando se quiera.
+   - **Después de pedir por WhatsApp:** cuando la clienta regresa al catálogo, sale del taller y la recibe un «¡Gracias por tu pedido! Aquí te espero cuando quieras volver».
 3. **Interior (galería de arcos):** se desliza de lado entre arcos, uno por colección, con tu logo de hojas grande al fondo, lámparas y enredaderas. Al tocar un arco, la colección se abre desde él.
 4. **Piezas que se mueven:** cada tarjeta flota y tiene una pequeña animación de su uso (vapor en las tazas, hojas que pasan en las libretas, platos que giran, láminas y aretes que se mecen, flores que crecen en jarrones, la llama de una vela, brillo en azulejos y joyas).
 5. **Ficha de cada pieza:** aquí sí se ve **la foto original**, con precio, estado y botones para **pedir por WhatsApp**, escribir por Instagram o compartir.
-6. **Contacto:** un panel verde con tu logo (las hojas y la luna), olas y tus azulejos de talavera (botón **Hacer un pedido** y al final de cada colección).
+6. **Contacto:** un panel verde con las hojas de tu logo, olas y tus azulejos de talavera (botón **Hacer un pedido** y al final de cada colección).
 
 **Tus fotos se convierten solas al estilo del catálogo:** cuando subes una foto desde el panel, el teléfono hace una versión "dibujada con tinta azul" y guarda **las dos** en tu Drive. En los arcos y tarjetas se ve el dibujo; al abrir la pieza, la foto original.
 
@@ -161,7 +163,7 @@ Abre **`https://TU-USUARIO.github.io/catalogo/admin.html`** y entra con tu clave
 - **Tipografías:** Fraunces (títulos) y Klee One (letra a mano), de Google Fonts. Se cambian en `index.html`, `admin.html` y en `css/base.css` (`--f-titulo`, `--f-mano`).
 - **Dibujos:** todo el arte se genera con código, sin imágenes pesadas:
   - `js/arte.js` → logo, patrones (escamas, olas, puntos, ajedrez, arcos, ramitas, estrellas…), marcos de arco, friso y enredaderas.
-  - `js/escenas.js` → la fachada simétrica (tu boceto), las puertas de madera con talavera, ventanas, faroles, macetas, la luna de Inluna y las piezas del interior.
+  - `js/escenas.js` → la casita de la entrada (ladrillo blanco, enredadera, árbol, puerta verde, postigos, celosías de talavera, arbolitos y tu emblema) y las piezas del interior.
 - **Animaciones de las piezas:** las palabras que activan cada una están en `js/animaciones.js`; cómo se mueven, en `css/piezas.css`.
 - **Estilo de las fotos dibujadas:** `js/estilo.js` (grosor de las líneas, cantidad de tinta).
 - **Piezas de ejemplo:** `js/demo.js` (solo se ven mientras no conectes tu hoja).
@@ -206,7 +208,7 @@ catalogo-inluna/
 │   ├── sonido.js         ← campanitas (opcionales)
 │   ├── datos.js          ← conexión con tu hoja de Google
 │   ├── nucleo.js         ← utilidades compartidas del catálogo
-│   ├── fachada.js        ← la entrada y sus juegos
+│   ├── fachada.js        ← la entrada, sus juegos y la salida del taller
 │   ├── taller.js         ← galería de arcos, colecciones, ficha y contacto
 │   ├── catalogo.js       ← arranque y rutas del catálogo
 │   ├── admin.js          ← funcionamiento del panel

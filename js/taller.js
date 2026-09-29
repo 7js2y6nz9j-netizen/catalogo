@@ -461,6 +461,22 @@
     if (e.target === dlgContacto || e.target.closest('[data-cerrar]')) I.volver();
   });
 
+  /* Al salir del taller: todo se cierra al instante (la fachada lo tapa) */
+  function cerrarDialogos() {
+    if (dlg.open) { dlg.close(); dlg.classList.remove('cerrando'); g.pieza = null; }
+    if (dlgContacto.open) { dlgContacto.close(); dlgContacto.classList.remove('cerrando'); }
+    document.documentElement.classList.remove('sin-scroll');
+  }
+  function cerrarTodo() {
+    cerrarDialogos();
+    const col = $('#coleccion');
+    col.getAnimations().forEach((a) => a.cancel());
+    col.hidden = true;
+    col.innerHTML = '';
+    g.col = null;
+    $('#taller').classList.remove('atras');
+  }
+
   // recordar la tarjeta tocada (para que la pieza "vuele" desde ahí)
   document.addEventListener('click', (e) => {
     const t = e.target.closest('.tarjeta');
@@ -484,6 +500,7 @@
 
   window.Taller = {
     construir, render, refrescar, mostrarColeccion, cerrarColeccion, abrirPieza, cerrarPieza, abrirContacto, cerrarContacto,
+    cerrarDialogos, cerrarTodo,
     coleccionAbierta: () => !$('#coleccion').hidden,
     coleccionActual: () => g.col,
     piezaAbierta: () => dlg.open,

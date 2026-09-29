@@ -1,32 +1,36 @@
 /* ==================================================================
    catalogo.js · Arranque del catálogo y navegación
-   Cargador (logo girando) → el logo vuela al frontón → fachada
+   Cargador (logo girando) → el logo vuela al emblema → fachada
    interactiva → galería de arcos → colección → pieza.
-   Rutas: #c/coleccion · #p/pieza · #contacto (el botón "atrás" funciona)
+   La fachada es siempre el inicio: se entra por la puerta y se sale
+   por ella (con "atrás", con el botón «salir» o al volver de mandar
+   tu pedido por WhatsApp), y se puede volver a entrar cuando quieras.
+   Rutas: (vacía) fachada · #taller · #c/coleccion · #p/pieza · #contacto
    ================================================================== */
 (function () {
   'use strict';
   const I = window.Inluna, D = window.Datos, A = window.Arte;
   const { $, espera, reducido, estado } = I;
   const Fachada = window.Fachada, Taller = window.Taller;
+  const CLAVE_PEDIDO = 'inluna:pedido';
+  let dentro = false, saliendo = false, pedidoPendiente = false, seFue = false;
+
+  const datosFachada = () => ({ nombre: estado.ajustes.nombre, antes: estado.ajustes.antesDelNombre, onEntrar: entrarAlTaller });
 
   async function iniciar() {
     const t0 = performance.now();
-    const ruta = leerRuta();
-    let yaEntro = false;
-    try { yaEntro = sessionStorage.getItem('inluna:entro') === '1'; } catch (e) { /* nada */ }
-    const saltarEntrada = ruta.tipo !== 'inicio' || yaEntro;
-
-    if (!saltarEntrada) {
-      Fachada.construir({
-        nombre: estado.ajustes.nombre,
-        antes: estado.ajustes.antesDelNombre,
-        onEntrar() {
-          try { sessionStorage.setItem('inluna:entro', '1'); } catch (e) { /* nada */ }
-          mostrarTaller();
-        },
-      });
+    let ruta = leerRuta();
+    const pedido = leerPedido();
+    // volviste después de mandar tu pedido, o recargaste dentro del taller:
+    // se empieza otra vez desde la fachada
+    if (pedido || ruta.tipo === 'taller') {
+      if (pedido) borrarPedido();
+      limpiarRuta();
+      ruta = { tipo: 'fachada' };
     }
+    const saltarEntrada = ruta.tipo !== 'fachada';
+
+    if (!saltarEntrada) Fachada.construir(datosFachada());
 
     const fuentes = document.fonts
       ? Promise.race([Promise.all([
@@ -58,6 +62,7 @@
     } else {
       await cargadorAlFronton();
       Fachada.animar();
+      if (pedido) Fachada.nota(true);
     }
   }
 
@@ -129,13 +134,74 @@
     $('[data-reintentar]', caja).addEventListener('click', () => location.reload());
   }
 
+  /* ---------- entrar y salir del taller ---------- */
+  function entrarAlTaller() {
+    // al cruzar la puerta queda una entrada en el historial: "atrás" te saca
+    if (leerRuta().tipo === 'fachada') history.pushState({ inluna: true, desdeFachada: true }, '', '#taller');
+    mostrarTaller();
+  }
+
   function mostrarTaller() {
     const t = $('#taller');
-    if (!t.hidden) return;
     t.hidden = false;
+    dentro = true;
     Taller.construir();
     rutear();
   }
+
+  // cuando la fachada ya lo tapa, el interior se guarda (queda listo para volver)
+  function guardarTaller() {
+    Taller.cerrarTodo();
+    $('#taller').hidden = true;
+    dentro = false;
+  }
+
+  async function salirDelTaller({ gracias = false } = {}) {
+    if (!dentro || saliendo) return;
+    saliendo = true;
+    Taller.cerrarDialogos(); // los diálogos van por encima de todo: se cierran antes
+    try {
+      await Fachada.salir(Object.assign(datosFachada(), { gracias, alCubrir: guardarTaller }));
+    } finally {
+      saliendo = false;
+    }
+  }
+
+  function salirPorLaPuerta() {
+    if (history.state && history.state.desdeFachada && leerRuta().tipo === 'taller') history.back();
+    else navegar('');
+  }
+
+  /* ---------- pedido por WhatsApp: al volver, sales del taller ---------- */
+  function marcarPedido() {
+    pedidoPendiente = true;
+    seFue = false;
+    try { sessionStorage.setItem(CLAVE_PEDIDO, String(Date.now())); } catch (e) { /* nada */ }
+  }
+  function leerPedido() {
+    try {
+      const t = Number(sessionStorage.getItem(CLAVE_PEDIDO));
+      return !!t && Date.now() - t < 12 * 3600 * 1000;
+    } catch (e) { return false; }
+  }
+  function borrarPedido() {
+    pedidoPendiente = false;
+    try { sessionStorage.removeItem(CLAVE_PEDIDO); } catch (e) { /* nada */ }
+  }
+  function alVolver() {
+    if (!pedidoPendiente || !seFue || document.visibilityState !== 'visible') return;
+    borrarPedido();
+    if (!dentro || !estado.listo) { Fachada.nota(true); return; }
+    setTimeout(() => {
+      limpiarRuta(); // la fachada es el inicio
+      salirDelTaller({ gracias: true });
+    }, 350);
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') { if (pedidoPendiente) seFue = true; return; }
+    alVolver();
+  });
+  window.addEventListener('pageshow', (e) => { if (e.persisted && pedidoPendiente) { seFue = true; alVolver(); } });
 
   /* ================================================================
      NAVEGACIÓN
@@ -146,8 +212,10 @@
     if (h.startsWith('p/')) return { tipo: 'pieza', id: h.slice(2) };
     if (h.startsWith('c/')) return { tipo: 'coleccion', slug: h.slice(2) };
     if (h === 'contacto') return { tipo: 'contacto' };
-    return { tipo: 'inicio' };
+    if (h === 'taller') return { tipo: 'taller' };
+    return { tipo: 'fachada' };
   }
+  const limpiarRuta = () => history.replaceState(null, '', location.pathname + location.search);
 
   function navegar(hash, { reemplazar = false } = {}) {
     const url = hash ? `#${hash}` : location.pathname + location.search;
@@ -159,7 +227,7 @@
   function rutaPadre() {
     const r = leerRuta();
     if (r.tipo === 'pieza' && Taller.coleccionActual()) return `c/${Taller.coleccionActual()}`;
-    return '';
+    return 'taller';
   }
   function volver() {
     if (history.state && history.state.inluna) history.back();
@@ -171,8 +239,19 @@
   }
 
   async function rutear() {
-    if (!estado.listo || $('#taller').hidden) return;
+    if (!estado.listo) return;
     const r = leerRuta();
+    if (r.tipo === 'fachada') {
+      if (dentro) salirDelTaller();
+      return;
+    }
+    if (!dentro) {
+      if (saliendo) return;
+      // "adelante" desde la fachada: se vuelve a entrar por la puerta
+      if (Fachada.activa()) Fachada.entrar();
+      else mostrarTaller();
+      return;
+    }
     if (r.tipo !== 'contacto') Taller.cerrarContacto();
     if (r.tipo === 'contacto') {
       await Taller.cerrarPieza();
@@ -181,14 +260,14 @@
     }
     if (r.tipo === 'pieza') {
       const p = estado.productos.find((x) => x.id === r.id);
-      if (!p) { I.aviso('Esa pieza ya no está en el catálogo.'); navegar('', { reemplazar: true }); return; }
+      if (!p) { I.aviso('Esa pieza ya no está en el catálogo.'); navegar('taller', { reemplazar: true }); return; }
       if (!Taller.coleccionAbierta()) Taller.mostrarColeccion(D.slug(p.categoria || 'Piezas'));
       Taller.abrirPieza(p, { direccion: Taller.direccion() });
       return;
     }
     await Taller.cerrarPieza();
     if (r.tipo === 'coleccion') {
-      if (!Taller.mostrarColeccion(r.slug)) navegar('', { reemplazar: true });
+      if (!Taller.mostrarColeccion(r.slug)) navegar('taller', { reemplazar: true });
     } else {
       await Taller.cerrarColeccion();
     }
@@ -201,6 +280,8 @@
       I.aviso(D.modoPrueba ? 'Modo de prueba: agrega tu WhatsApp en el panel → Ajustes.' : 'Por ahora escríbeme por Instagram.');
       return;
     }
+    if (wa) { marcarPedido(); return; } // se abre WhatsApp; al volver, sales del taller
+    if (e.target.closest('[data-salir]')) { e.preventDefault(); salirPorLaPuerta(); return; }
     const a = e.target.closest('a[href^="#"]');
     if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     e.preventDefault();

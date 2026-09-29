@@ -1,349 +1,293 @@
 /* ==================================================================
-   escenas.js · La fachada del taller (simétrica) y las piezas del
-   interior. Todo el dibujo gira alrededor de un eje central x = 320:
-   luna de Inluna → hojas del frontón → letrero → puertas → camino.
+   escenas.js · La fachada del taller y las piezas del interior
    ------------------------------------------------------------------
-   De tu boceto: techo con aleros curvos (café, con tejas), el logo de
-   hojas en el frontón, puertas de madera con incrustaciones de talavera
-   y tu friso de arcos y estrellas. El azul queda solo en la talavera.
+   Fachada minimalista, como tus referencias: una casita de ladrillo
+   blanco con la enredadera cayendo desde el techo, un árbol que deja
+   caer sus hojas y sombras de hojas sobre la pared. Puerta verde,
+   ventana con postigos, celosías de talavera (el azul queda solo ahí y
+   en las macetas), arbolitos en maceta y tu emblema: hojas con luna.
    ================================================================== */
 (function () {
   'use strict';
   const A = window.Arte;
-  const { T, O, P, V, VC, C, D, LU } = A.colores;
+  const { T, O, P, V, C } = A.colores;
   const { f } = A.util;
   const CFG = window.INLUNA_CONFIG || {};
   const LUZ = '#fff1c4';
-  // Tonos de café para el techo y la madera (el azul queda solo en la talavera)
-  const TECHO = '#c79464', TECHO_CLARO = '#e8cda6', MADERA = '#ad7b50', FOLLAJE = '#d6eacb';
 
-  const W = 640, H = 520, CX = 320, SUELO = 478;
-  const eje = (x) => 2 * CX - x;
-  const espejo = (pts) => pts.map(([x, y]) => [eje(x), y]);
+  // La casa
+  const MURO = '#fdfbf6', MURO_LADO = '#ebe4d6', LADRILLO = 'rgba(58, 42, 31, 0.13)';
+  const SOMBRA = '#3a2e24', VIDRIO = '#3a342c', BANQUETA = '#ece5d8';
+  const PUERTA = '#7cb342', PUERTA_PANEL = '#8cc152', PUERTA_LINEA = '#5a8a2d', LATON = '#d6ae55';
+  // Verdes de las hojas: del limón con sol al verde de tu logo
+  const VERDES = ['#d7e972', '#badb4f', '#94c940', '#66b845', '#3ea53d', V, '#1f8a36'];
+
+  const W = 400, H = 500, CX = 200, SUELO = 468;
   const pct = (v, total) => `${((v / total) * 100).toFixed(3)}%`;
+  const f2 = (n) => Math.round(n * 100) / 100;
 
   /* Posiciones (en unidades del dibujo) de lo que se puede tocar */
   const FACHADA = {
     W, H, CX, SUELO,
-    puerta: { x: 222, y: 304, w: 196, h: 174 },
-    logo: { x: 295, y: 96, w: 50 },
-    ventanas: [{ x: 95, y: 305, w: 58, h: 107 }, { x: 487, y: 305, w: 58, h: 107 }],
-    faroles: [{ x: 164, y: 284, w: 40, h: 78 }, { x: 436, y: 284, w: 40, h: 78 }],
-    macetas: [{ x: 158, y: 372, w: 56, h: 106 }, { x: 426, y: 372, w: 56, h: 106 }],
+    muro: { x: 70, y: 116, w: 260, h: SUELO - 116 },
+    puerta: { x: 162, y: 318, w: 76, h: 150 },
+    emblema: { x: 163, y: 168, w: 74, h: 74 },
+    postigo: { x: 102, y: 176, w: 48, h: 64 },
+    celosias: [{ x: 250, y: 176, w: 48, h: 64 }, { x: 84, y: 352, w: 42, h: 42 }, { x: 274, y: 352, w: 42, h: 42 }],
+    macetas: [{ x: 122, y: 386, w: 32, h: 82 }, { x: 246, y: 386, w: 32, h: 82 }],
   };
   /* Caja CSS (porcentajes) de un elemento dentro de la casa */
   function caja(r) {
     return `left:${pct(r.x, W)};top:${pct(r.y, H)};width:${pct(r.w, W)};height:${pct(r.h, H)}`;
   }
 
-  /* ---------- geometría del techo ---------- */
-  const FALDA = 'M200,150H440C500,170 570,196 624,212C606,224 596,236 580,236H60C44,236 34,224 16,212C70,196 140,170 200,150Z';
-  function bezier(p0, p1, p2, p3, t) {
-    const u = 1 - t;
-    return [
-      u * u * u * p0[0] + 3 * u * u * t * p1[0] + 3 * u * t * t * p2[0] + t * t * t * p3[0],
-      u * u * u * p0[1] + 3 * u * u * t * p1[1] + 3 * u * t * t * p2[1] + t * t * t * p3[1],
-    ];
+  /* ---------- hojas redonditas, como las de tu referencia ---------- */
+  const HOJA = 'M0,-6.5C3.8,-6.5 6.4,-3.4 6,0.4C5.6,4.2 2.6,6.8 0,8.6C-2.6,6.8 -5.6,4.2 -6,0.4C-6.4,-3.4 -3.8,-6.5 0,-6.5Z';
+  const VENA = 'M0,-4.8V6.2';
+  // tono: 0 = limón con sol … 6 = verde oscuro (sesgo > 0 → más oscuras)
+  const tono = (r, sesgo = 0) => VERDES[Math.max(0, Math.min(VERDES.length - 1, Math.floor(r() * 4 + sesgo)))];
+  const colocar = (x, y, giro, esc) => `translate(${f(x)},${f(y)}) rotate(${Math.round(giro)}) scale(${f2(esc)})`;
+  // hoja que brota (el <g> la coloca; el <g class="hv"> se anima con CSS)
+  function hoja(x, y, giro, esc, relleno, retraso) {
+    const d = retraso == null ? '' : ` style="--d:${f2(retraso)}s"`;
+    return `<g transform="${colocar(x, y, giro, esc)}"><g class="hv"${d}><path d="${HOJA}" fill="${relleno}"/>` +
+      `<path d="${VENA}" stroke="rgba(255,255,255,.42)" stroke-width=".7" fill="none"/></g></g>`;
   }
-  /* Borde izquierdo de la falda del techo para una altura y */
-  const bordeFalda = (function () {
-    const pts = [];
-    for (let k = 0; k <= 30; k++) pts.push(bezier([200, 150], [140, 170], [70, 196], [16, 212], k / 30));
-    for (let k = 1; k <= 20; k++) pts.push(bezier([16, 212], [34, 224], [44, 236], [60, 236], k / 20));
-    return function (y) {
-      for (let i = 1; i < pts.length; i++) {
-        const a = pts[i - 1], b = pts[i];
-        if ((y - a[1]) * (y - b[1]) <= 0 && a[1] !== b[1]) return a[0] + (b[0] - a[0]) * (y - a[1]) / (b[1] - a[1]);
-      }
-      return 60;
-    };
-  })();
+  const hojaFija = (x, y, giro, esc, relleno) => `<path d="${HOJA}" transform="${colocar(x, y, giro, esc)}" fill="${relleno}"/>`;
+  // (sin color propio: el grupo de sombras pone un solo tono, sin manchas donde se enciman)
+  const sombraHoja = (x, y, giro, esc) => `<path d="${HOJA}" transform="${colocar(x, y, giro, esc)}"/>`;
 
-  /* Tejas: filas de guiones café, en espejo para que sean simétricas */
-  function tejas(r) {
-    let d = '';
-    [166, 182, 198, 214, 228].forEach((y, fila) => {
-      const limite = bordeFalda(y) + 12, hueco = 11;
-      let x;
-      if (fila % 2 === 0) {
-        d += `M${CX - 11},${y}H${CX + 11}`;
-        x = CX - 11 - hueco;
-      } else {
-        x = CX - hueco / 2;
-      }
-      while (x - 12 > limite) {
-        const largo = Math.min(18 + r() * 8, x - limite);
-        d += `M${f(x)},${y}H${f(x - largo)}M${f(eje(x))},${y}H${f(eje(x - largo))}`;
-        x -= largo + hueco + r() * 3;
-      }
-    });
-    return `<path d="${d}" stroke="${C}" stroke-width="2.8"/>`;
+  function curva(pts) {
+    const s = A.catmullRom(pts);
+    return `M${f(s[0][0][0])},${f(s[0][0][1])}` + s.map((q) => `C${f(q[1][0])},${f(q[1][1])} ${f(q[2][0])},${f(q[2][1])} ${f(q[3][0])},${f(q[3][1])}`).join('');
   }
 
-  /* Tu friso de arcos y estrellas, de esquina a esquina bajo el alero */
-  function friso() {
-    const x0 = 50, x1 = 590, y = 246, alto = 38, n = 13, u = (x1 - x0) / n, yb = y + alto;
-    let s = `<rect x="${x0}" y="${y}" width="${x1 - x0}" height="${alto}" fill="${P}" stroke="none"/>`;
-    for (let i = 0; i < n; i++) {
-      const cx = x0 + u * (i + 0.5);
-      s += `<path d="M${f(cx - u / 2 + 1)},${y}A${f(u / 2 - 1)},11 0 0 0 ${f(cx + u / 2 - 1)},${y}Z" fill="${T}" stroke-width="1.3"/>`;
-      s += `<path d="M${f(cx - u * 0.3)},${y + 4}H${f(cx + u * 0.3)}" stroke="${P}" stroke-width="1" opacity=".55"/>`;
-      if (i === 6) continue; // el centro lo ocupa el letrero
-      if (i % 2 === 0) {
-        const ra = u * 0.2, ys = yb - 11;
-        const derecha = cx < CX; // la sombra azul mira hacia la puerta, en espejo
-        s += derecha
-          ? `<path d="M${f(cx)},${f(ys - ra + 2.2)}A${f(ra - 2.2)},${f(ra - 2.2)} 0 0 1 ${f(cx + ra - 2.2)},${f(ys)}V${yb}" stroke="${T}" stroke-width="4.4"/>`
-          : `<path d="M${f(cx)},${f(ys - ra + 2.2)}A${f(ra - 2.2)},${f(ra - 2.2)} 0 0 0 ${f(cx - ra + 2.2)},${f(ys)}V${yb}" stroke="${T}" stroke-width="4.4"/>`;
-        s += `<path d="M${f(cx - ra)},${yb}V${f(ys)}A${f(ra)},${f(ra)} 0 0 1 ${f(cx + ra)},${f(ys)}V${yb}" stroke-width="1.5"/>`;
-      } else {
-        s += `<path d="${A.destello(cx, yb - 12, u * 0.17, 0.18)}" stroke-width="1.3"/>`;
-        [[-0.3, -0.52], [0.3, -0.52], [-0.3, -0.12], [0.3, -0.12]].forEach(([a, b]) => {
-          s += `<circle cx="${f(cx + a * u)}" cy="${f(yb + b * alto * 0.62)}" r="1.1" fill="${O}" stroke="none"/>`;
-        });
-      }
+  /* La enredadera que cae desde el techo (y su sombra en la pared) */
+  function enredaderaTecho() {
+    const r = A.azar('enredadera-techo');
+    let mata = '', tiras = '', sombras = '';
+    // la mata sobre el pretil: brota del centro hacia las orillas
+    for (let k = 0; k < 170; k++) {
+      const x = 46 + r() * 312;
+      const orilla = Math.abs(x - CX) / 156;
+      const y = 94 + r() * 30 + orilla * 8 + (r() < 0.3 ? r() * 14 : 0);
+      const esc = 0.8 + r() * 0.55, giro = (r() - 0.5) * 140;
+      mata += hoja(x, y, giro, esc, tono(r, (y - 96) / 16), 0.05 + orilla * 0.7 + r() * 0.3);
+      if (x > 74 && x < 346) sombras += sombraHoja(x - 6, y + 16, giro, esc);
     }
-    s += `<path d="M${x0},${y}H${x1}M${x0},${yb}H${x1}" stroke-width="1.9"/>`;
-    s += `<path d="M${x0},${y}L${x0 - 7},${y - 4}V${yb - 4}L${x0},${yb}Z" fill="${T}" stroke-width="1.5"/>`;
-    s += `<path d="M${x1},${y}L${x1 + 7},${y - 4}V${yb - 4}L${x1},${yb}Z" fill="${T}" stroke-width="1.5"/>`;
+    // tiras que cuelgan: [x, hasta dónde bajan]
+    [[58, 172], [86, 204], [112, 236], [144, 210], [178, 158], [222, 158], [258, 204], [292, 222], [322, 196], [348, 176]].forEach(([x0, fin], i) => {
+      const n = Math.max(3, Math.round((fin - 116) / 10));
+      const pts = [];
+      for (let j = 0; j <= n; j++) { const t = j / n; pts.push([x0 + Math.sin(t * 2.6 + i * 1.7) * 6 * t, 116 + (fin - 116) * t]); }
+      let g = `<path class="tallo" pathLength="1" style="--d:${f2(0.5 + i * 0.06)}s;--dur:1.2s" d="${curva(pts)}" fill="none" stroke="${C}" stroke-width="1.2" stroke-linecap="round"/>`;
+      pts.slice(1).forEach(([x, y], j) => {
+        const t = (j + 1) / n, lado = j % 2 ? 1 : -1;
+        const esc = 0.95 - t * 0.4 + r() * 0.15, giro = lado * (30 + r() * 30);
+        g += hoja(x + lado * 3.5, y, giro, esc, tono(r, 1 + t * 2.4), 0.6 + i * 0.06 + t * 0.9);
+        if (x > 72 && x < 346) sombras += sombraHoja(x + lado * 3.5 - 6, y + 16, giro, esc);
+      });
+      tiras += `<g class="tira" style="transform-origin:${x0}px 116px;--m:${f2(3.4 + (i % 4) * 0.5)}s">${g}</g>`;
+    });
+    return { hojas: tiras + mata, sombras };
+  }
+
+  /* Sombra del árbol que cae en diagonal sobre el lado derecho */
+  function sombrasArbol() {
+    const r = A.azar('sombra-arbol');
+    let s = '';
+    for (let k = 0; k < 46; k++) {
+      const t = r(), x = 236 + r() * 118, y = 118 + t * t * 230;
+      if (x < 236 + (y - 118) * 0.15) continue;
+      s += sombraHoja(x, y, r() * 360, 1.4 + r() * 1.1);
+    }
     return s;
   }
 
-  function ventanaEstatica(cx, lado) {
-    // lado: 1 = la sombra azul a la derecha (ventana izquierda), -1 = en espejo
-    const ro = 34, ri = 27, ys = 334, yb = 410;
-    const barrido = lado > 0 ? 1 : 0, barridoInt = lado > 0 ? 0 : 1;
-    let s = `<path d="M${cx - ro},${yb}V${ys}A${ro},${ro} 0 0 1 ${cx + ro},${ys}V${yb}Z M${cx - ri},${yb}V${ys}A${ri},${ri} 0 0 1 ${cx + ri},${ys}V${yb}Z" fill="${P}" fill-rule="evenodd" stroke="none"/>`;
-    s += `<path d="M${cx},${ys - ro}A${ro},${ro} 0 0 ${barrido} ${cx + lado * ro},${ys}V${yb}H${cx + lado * ri}V${ys}A${ri},${ri} 0 0 ${barridoInt} ${cx},${ys - ri}Z" fill="${T}" stroke="none"/>`;
-    s += `<path d="M${cx - ro},${yb}V${ys}A${ro},${ro} 0 0 1 ${cx + ro},${ys}V${yb}"/>`;
-    s += `<path d="M${cx - ri},${yb}V${ys}A${ri},${ri} 0 0 1 ${cx + ri},${ys}V${yb}" stroke-width="1.8"/>`;
-    s += `<path d="M${cx},${ys - ri}V${yb}M${cx - ri},356H${cx + ri}" stroke-width="2.2"/>`;
-    s += `<path d="M${cx - 38},${yb}H${cx + 38}V${yb + 7}H${cx - 38}Z" fill="${P}" stroke-width="2"/>`;
-    s += `<path d="M${cx - 32},${yb + 7}H${cx + 32}L${cx + 28},${yb + 26}H${cx - 28}Z" fill="${T}" stroke-width="2"/>`;
-    s += `<path d="M${cx - 26},${yb + 13}H${cx + 26}M${cx - 24},${yb + 20}H${cx + 24}" stroke="${P}" stroke-width="1.4" opacity=".7"/>`;
-    return s;
+  function marcoVentana(v) {
+    return `<rect x="${v.x}" y="${v.y}" width="${v.w}" height="${v.h}" fill="${MURO}"/>` +
+      `<rect x="${v.x - 4}" y="${v.y + v.h}" width="${v.w + 8}" height="5" fill="${MURO}"/>`;
   }
 
   /* ================================================================
      FACHADA · devuelve { casa, vivo }:
-     · casa: el dibujo quieto con filtro de tinta (con huecos en la
-       puerta y las ventanas, para que se vea lo que hay detrás)
-     · vivo: enredaderas que crecen + el ▽ donde aterriza el logo
+     · casa: el dibujo quieto (con el hueco de la puerta)
+     · vivo: la enredadera que brota encima de todo
      ================================================================ */
   function fachada({ nombre = CFG.nombre || 'Inluna' } = {}) {
-    const r = A.azar('fachada-simetrica');
+    const M = FACHADA.muro, x0 = M.x, x1 = M.x + M.w, yT = M.y, pu = FACHADA.puerta;
     const abrir = (clase) => `<svg class="fachada-svg ${clase}" viewBox="0 0 ${W} ${H}" aria-hidden="true" focusable="false" overflow="visible">`;
-
-    // ----- muros (con huecos) -----
-    let casa = `<path fill-rule="evenodd" fill="${P}" stroke="none" d="M50,284H590V${SUELO}H50Z M222,304H418V${SUELO}H222Z` +
-      ` M97,410V334A27,27 0 0 1 151,334V410Z M489,410V334A27,27 0 0 1 543,334V410Z"/>`;
-    let zocalo = '';
-    for (let x = 64; x < 200; x += 12) zocalo += `M${x},469h6v6h-6Z M${eje(x) - 6},469h6v6h-6Z`;
-    casa += `<path d="${zocalo}" fill="${T}" stroke="none"/>`;
-    casa += `<path d="M50,284V${SUELO}M590,284V${SUELO}"/><path d="M58,284V${SUELO}M582,284V${SUELO}" stroke-width="1.6"/>`;
-    casa += `<path d="M204,284V${SUELO}M436,284V${SUELO}" stroke-width="2.2"/><path d="M211,284V${SUELO}M429,284V${SUELO}" stroke-width="1.4"/>`;
-    casa += `<path d="M50,462H204M436,462H590" stroke-width="1.4"/>`;
-    // marco azul de la puerta (doble, como en tu boceto)
-    casa += `<path d="M214,${SUELO}V296H426V${SUELO}" stroke="${T}" stroke-width="3.4"/><path d="M221,${SUELO}V303H419V${SUELO}" stroke="${T}" stroke-width="2"/>`;
-    casa += ventanaEstatica(124, 1) + ventanaEstatica(516, -1);
-    // ----- friso + letrero central -----
-    casa += friso();
-    casa += `<rect x="258" y="238" width="124" height="54" rx="9" fill="${P}" stroke-width="2.6"/>` +
-      `<rect x="264" y="244" width="112" height="42" rx="6" stroke="${T}" stroke-width="1.4"/>` +
-      `<path d="${A.destello(276, 265, 4.6, 0.2)}" fill="${T}" stroke="none"/><path d="${A.destello(364, 265, 4.6, 0.2)}" fill="${T}" stroke="none"/>`;
-    // ----- falda del techo con tejas -----
-    casa += `<path d="${FALDA}" fill="${TECHO}" stroke="none"/>` + tejas(r) + `<path d="${FALDA}"/>`;
-    casa += `<path d="M60,236C58,239 59,242 63,244H577C581,242 582,239 580,236" stroke-width="2"/>`;
-    // ----- frontón (con curva de pagoda) -----
-    casa += `<path d="M186,146C268,128 311,72 320,34C329,72 372,128 454,146L440,150H200Z" fill="${TECHO_CLARO}" stroke="none"/>`;
-    casa += `<path d="M320,34C311,72 268,128 186,146C181,147 178,145 176,141"/>`;
-    casa += `<path d="M320,34C329,72 372,128 454,146C459,147 462,145 464,141"/>`;
-    casa += `<path d="M320,50C312,84 272,134 200,150M320,50C328,84 368,134 440,150" stroke-width="2"/>`;
-    casa += `<path d="M200,150H440" stroke-width="2.2"/>`;
-    casa += `<path d="${A.destello(CX, 22, 7.5, 0.18)}" fill="${D}" stroke-width="1.6"/>`;
-
-    // ----- suelo -----
-    let suelo = `<path d="M-700,${SUELO + 1}C-300,${SUELO - 2} 100,${SUELO + 2} ${CX},${SUELO}C540,${SUELO - 2} 940,${SUELO + 2} 1340,${SUELO + 1}" stroke-width="2.6"/>`;
-    let hierba = '';
-    for (let x = 36; x > -680; x -= 30 + r() * 52) {
-      const a = 5 + r() * 6;
-      [x, eje(x)].forEach((xx, k) => {
-        const s1 = k ? -1 : 1;
-        hierba += `M${f(xx)},${SUELO}q${-2 * s1},-${f(a)} ${-6 * s1},-${f(a + 3)}M${f(xx)},${SUELO}q${s1},-${f(a + 3)} ${2 * s1},-${f(a + 6)}M${f(xx)},${SUELO}q${3 * s1},-${f(a - 1)} ${8 * s1},-${f(a + 1)}`;
-      });
-    }
-    suelo += `<path d="${hierba}" stroke-width="1.6"/>`;
-    [[490, 40, 5], [509, 50, 6.5]].forEach(([y, rx, ry]) => {
-      suelo += `<ellipse cx="${CX}" cy="${y}" rx="${rx}" ry="${ry}" fill="${P}" stroke-width="1.8"/>`;
-    });
-    [[-150, 494], [-60, 504], [30, 500]].forEach(([x, y]) => {
-      const rx = f(3 + r() * 4), ry = f(1.6 + r() * 1.4);
-      suelo += `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" stroke-width="1.4"/><ellipse cx="${eje(x)}" cy="${y}" rx="${rx}" ry="${ry}" stroke-width="1.4"/>`;
-    });
+    const enr = enredaderaTecho();
+    const muroD = `M${x0},${yT}H${x1}V${SUELO}H${x0}Z`;
+    const huecoD = `M${pu.x},${pu.y}H${pu.x + pu.w}V${SUELO}H${pu.x}Z`;
+    const ladoD = `M${x1},${yT}L${x1 + 16},${yT + 7}V${SUELO}H${x1}Z`;
+    const vp = FACHADA.postigo;
 
     let s = abrir('fachada-casa') +
-      `<defs>${A.filtroTinta('tinta-fachada', { escala: 2.4, frecuencia: 0.028, semilla: 11 })}</defs>` +
-      `<g class="fz-suelo" fill="none" stroke="${O}" stroke-linecap="round" filter="url(#tinta-fachada)">${suelo}</g>` +
-      `<g class="fz-casa" filter="url(#tinta-fachada)" fill="none" stroke="${O}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">${casa}</g>`;
-    const largo = String(nombre).length;
-    const ajuste = largo > 8 ? ` textLength="84" lengthAdjust="spacingAndGlyphs"` : '';
-    s += `<text class="fz-letrero" x="${CX}" y="274" text-anchor="middle" fill="${O}"${ajuste}>${escapar(nombre)}</text></svg>`;
+      `<defs>${A.filtroTinta('tinta-fachada', { escala: 1.5, frecuencia: 0.035, semilla: 11 })}` +
+      `<pattern id="ladrillos" width="24" height="18" patternUnits="userSpaceOnUse"><path d="M0,.5H24M0,9.5H24M7,.5V9.5M19,9.5V18" stroke="${LADRILLO}" stroke-width="1" fill="none"/></pattern>` +
+      `<clipPath id="recorte-muro"><path clip-rule="evenodd" d="${muroD} ${huecoD} ${ladoD}"/></clipPath></defs>`;
 
-    // ----- capa viva: las hojas de Inluna en el frontón y las enredaderas -----
-    const L = FACHADA.logo;
-    let v = abrir('fachada-viva') +
-      `<g class="fz-logo" transform="translate(${L.x},${L.y}) scale(${L.w / 100})"><rect width="100" height="100" fill="none" stroke="none"/>${A.logoPartes()}</g>`;
-    let enr = '';
-    const par = (pts, op) => {
-      enr += A.enredadera(pts, op);
-      enr += A.enredadera(espejo(pts), Object.assign({}, op, { semilla: op.semilla + 100 }));
-    };
-    par([[58, 478], [46, 446], [60, 414], [46, 382], [60, 350], [46, 318], [58, 292], [44, 268], [30, 250], [20, 230]],
-      { semilla: 3, retraso: 0.1, dur: 2.1, hoja: [9, 15], paso: 14 });
-    par([[92, 244], [96, 262], [90, 280], [95, 296]], { semilla: 12, retraso: 1.5, dur: 0.8, hoja: [6, 11], paso: 11, grosor: 1.6 });
-    par([[150, 242], [153, 258], [148, 272]], { semilla: 14, retraso: 1.7, dur: 0.7, hoja: [6, 10], paso: 11, grosor: 1.6 });
-    enr += A.enredadera([[206, 334], [212, 306], [240, 298], [266, 306], [293, 298], [320, 305], [347, 298], [374, 306], [400, 298], [428, 306], [434, 334]],
-      { semilla: 8, retraso: 0.8, dur: 1.7, hoja: [7, 12], paso: 13, flores: 0.2, grosor: 1.8 });
-    par([[100, 419], [98, 404], [104, 392], [100, 380]], { semilla: 31, retraso: 1.1, dur: 0.7, hoja: [7, 11], paso: 8, zarcillos: 0, flores: 0.25 });
-    par([[146, 419], [149, 405], [144, 394]], { semilla: 33, retraso: 1.25, dur: 0.6, hoja: [6, 10], paso: 8, zarcillos: 0 });
-    [[20, 478], [-90, 478], [-240, 478]].forEach(([x, y], i) => {
-      par([[x, y], [x + 2, y - 14], [x - 2, y - 28]], { semilla: 40 + i, retraso: 1 + i * 0.1, dur: 0.6, hoja: [6, 9], paso: 7, zarcillos: 0, grosor: 1.4 });
-    });
-    v += `<g class="fz-enredaderas">${enr}</g></svg>`;
-    return { casa: s, vivo: v };
+    // banqueta
+    let juntas = '';
+    for (let x = 40; x < 380; x += 34) juntas += `M${x},${SUELO}L${x - 4},${SUELO + 12}`;
+    s += `<path d="M18,${SUELO}H382V${SUELO + 12}H18Z" fill="${BANQUETA}"/><path d="${juntas}" stroke="${O}" stroke-width=".8" opacity=".25"/>`;
+    // muro de ladrillo (con el hueco de la puerta) y su lado en sombra
+    s += `<path fill-rule="evenodd" d="${muroD} ${huecoD}" fill="${MURO}"/><path fill-rule="evenodd" d="${muroD} ${huecoD}" fill="url(#ladrillos)"/>`;
+    s += `<path d="${ladoD}" fill="${MURO_LADO}"/><path d="${ladoD}" fill="url(#ladrillos)" opacity=".7"/>`;
+    // pretil
+    s += `<path d="M${x0 - 6},${yT - 9}H${x1 + 6}V${yT + 2}H${x0 - 6}Z" fill="${MURO}"/><path d="M${x1 + 6},${yT - 9}L${x1 + 20},${yT - 3}V${yT + 7}L${x1 + 6},${yT + 2}Z" fill="${MURO_LADO}"/>`;
+    // ventana con vidrio oscuro (los postigos van encima, se pueden cerrar)
+    s += marcoVentana(vp) + `<rect x="${vp.x + 5}" y="${vp.y + 5}" width="${vp.w - 10}" height="${vp.h - 10}" fill="${VIDRIO}"/>`;
+    s += `<path d="M${vp.x + vp.w / 2},${vp.y + 5}V${vp.y + vp.h - 5}M${vp.x + 5},${vp.y + vp.h * 0.45}H${vp.x + vp.w - 5}" stroke="${MURO}" stroke-width="2.2"/>`;
+    s += `<path d="M${vp.x + 9},${vp.y + vp.h - 12}L${vp.x + 17},${vp.y + 10}" stroke="rgba(255,255,255,.16)" stroke-width="3"/>`;
+    // repisas de las celosías
+    FACHADA.celosias.forEach((v) => { s += `<rect x="${v.x - 4}" y="${v.y + v.h}" width="${v.w + 8}" height="5" fill="${MURO}"/>`; });
+    // marco de la puerta, cornisa y escalón
+    s += `<path fill-rule="evenodd" d="M${pu.x - 6},${SUELO}V${pu.y - 6}H${pu.x + pu.w + 6}V${SUELO}Z ${huecoD}" fill="${MURO}"/>`;
+    s += `<path d="M${pu.x - 14},${pu.y - 18}H${pu.x + pu.w + 14}V${pu.y - 10}H${pu.x - 14}Z" fill="${MURO}"/>`;
+    s += `<path d="M${pu.x - 10},${SUELO}H${pu.x + pu.w + 10}V${SUELO + 6}H${pu.x - 10}Z" fill="#e2dbcd"/>`;
+    // zócalo de talavera (rombitos azules)
+    let zocalo = '';
+    for (let x = x0 + 8; x < x1 - 4; x += 12) {
+      if (x > pu.x - 14 && x < pu.x + pu.w + 14) continue;
+      zocalo += `<rect x="${x - 3}" y="455" width="6" height="6" fill="${T}" transform="rotate(45 ${x} 458)"/>`;
+    }
+    s += zocalo;
+
+    // sombras de las hojas sobre la pared (la de la enredadera y la del árbol)
+    s += `<g clip-path="url(#recorte-muro)" fill="${SOMBRA}" opacity=".1">${enr.sombras}${sombrasArbol()}</g>`;
+
+    // contornos a mano (tinta café)
+    let tinta = `<path d="M18,${SUELO}H382"/>`;
+    tinta += `<path d="M${x0},${yT + 2}V${SUELO}M${x1},${yT + 2}V${SUELO}M${x1 + 16},${yT + 7}V${SUELO}" stroke-width="1.5"/>`;
+    tinta += `<path d="M${x0 - 6},${yT - 9}H${x1 + 6}V${yT + 2}H${x0 - 6}Z M${x1 + 6},${yT - 9}L${x1 + 20},${yT - 3}V${yT + 7}L${x1 + 16},${yT + 7}" stroke-width="1.5"/>`;
+    tinta += `<rect x="${vp.x}" y="${vp.y}" width="${vp.w}" height="${vp.h}" stroke-width="1.5"/><rect x="${vp.x + 5}" y="${vp.y + 5}" width="${vp.w - 10}" height="${vp.h - 10}" stroke-width=".9"/>`;
+    [vp].concat(FACHADA.celosias).forEach((v) => { tinta += `<rect x="${v.x - 4}" y="${v.y + v.h}" width="${v.w + 8}" height="5" stroke-width="1.2"/>`; });
+    tinta += `<path d="M${pu.x - 6},${SUELO}V${pu.y - 6}H${pu.x + pu.w + 6}V${SUELO}M${pu.x},${SUELO}V${pu.y}H${pu.x + pu.w}V${SUELO}" stroke-width="1.4"/>`;
+    tinta += `<path d="M${pu.x - 14},${pu.y - 18}H${pu.x + pu.w + 14}V${pu.y - 10}H${pu.x - 14}Z" stroke-width="1.4"/>`;
+    tinta += `<path d="M${pu.x - 9},${pu.y - 10}L${pu.x - 5},${pu.y - 4}M${pu.x + pu.w + 9},${pu.y - 10}L${pu.x + pu.w + 5},${pu.y - 4}" stroke-width="1.2"/>`;
+    tinta += `<path d="M${pu.x - 10},${SUELO}V${SUELO + 6}H${pu.x + pu.w + 10}V${SUELO}" stroke-width="1.2"/>`;
+    tinta += `<path d="M${x0},449H${pu.x - 14}M${pu.x + pu.w + 14},449H${x1}" stroke-width=".9"/>`;
+    s += `<g filter="url(#tinta-fachada)" fill="none" stroke="${O}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${tinta}</g>`;
+
+    // letrero pintado sobre la pared, con dos hojitas
+    const largo = String(nombre).length;
+    const ajuste = largo > 8 ? ` textLength="96" lengthAdjust="spacingAndGlyphs"` : '';
+    s += hojaFija(CX - 50, 289, -62, 0.62, VERDES[4]) + hojaFija(CX + 50, 289, 62, 0.62, VERDES[4]);
+    s += `<text class="fz-letrero" x="${CX}" y="296" text-anchor="middle" fill="${O}"${ajuste}>${escapar(nombre)}</text></svg>`;
+
+    const vivo = abrir('fachada-viva') + `<g class="fz-enredadera">${enr.hojas}</g></svg>`;
+    return { casa: s, vivo };
   }
 
   /* ---------- piezas que se pueden tocar ---------- */
   function hojaPuerta() {
-    // madera café con incrustaciones de talavera (arco con estrella y panel de puntos)
-    const w = 98, h = 174, cx = 49, cy = 54, R1 = 32, R2 = 26;
-    let s = `<rect x="1.5" y="1.5" width="${w - 3}" height="${h - 3}" fill="${MADERA}" stroke="${O}" stroke-width="3"/>`;
-    s += `<path d="M8,8V${h - 8}M${w - 8},8V${h - 8}" stroke="${C}" stroke-width="1.2" opacity=".6"/>`;
-    s += `<path d="M${cx - R1},96V${cy}A${R1},${R1} 0 0 1 ${cx + R1},${cy}V96Z" fill="${P}" stroke="${O}" stroke-width="2.6"/>`;
-    s += `<path d="M${cx},${cy - R1}A${R1},${R1} 0 0 1 ${cx + R1},${cy}V96H${cx + R2}V${cy}A${R2},${R2} 0 0 0 ${cx},${cy - R2}Z" fill="${T}"/>`;
-    s += `<path d="M${cx - R2},96V${cy}A${R2},${R2} 0 0 1 ${cx + R2},${cy}V96" fill="none" stroke="${T}" stroke-width="1.3"/>`;
-    s += `<path d="${A.destello(cx - 3, cy + 9, 12, 0.16)}" fill="${T}"/>`;
-    s += `<rect x="16" y="106" width="66" height="56" rx="2" fill="${P}" stroke="${O}" stroke-width="2.4"/>`;
-    s += `<rect x="20" y="110" width="58" height="48" rx="1" fill="none" stroke="${T}" stroke-width="1.4"/>`;
-    for (let j = 0; j < 3; j++) {
-      for (let i = 0; i < 4; i++) s += `<circle cx="${f(26 + i * 15 + (j % 2) * 7.5 - 3.75)}" cy="${f(119 + j * 15)}" r="${j % 2 ? 1.6 : 2.4}" fill="${T}"/>`;
-    }
-    s += `<rect x="84" y="92" width="5" height="24" rx="2.5" fill="${O}"/>`;
-    return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true" focusable="false"><g filter="url(#tinta-fachada)" stroke-linejoin="round">${s}</g></svg>`;
-  }
-
-  /* Lo que se ve por la puerta al abrirse: la galería de arcos del interior */
-  function huecoPuerta() {
-    const w = 196, h = 174, c = w / 2;
-    let s = `<defs><radialGradient id="hueco-luz" cx="50%" cy="38%" r="75%"><stop offset="0" stop-color="#fffdf6"/><stop offset=".6" stop-color="${P}"/><stop offset="1" stop-color="#e2d3b3"/></radialGradient></defs>`;
-    s += `<rect width="${w}" height="${h}" fill="url(#hueco-luz)"/>`;
-    s += `<g transform="translate(${c - 24},14) scale(.48)">${A.logoPartes()}</g>`;
-    s += `<path d="M0,138H${w}V${h}H0Z" fill="#eadcbf"/><path d="M0,138H${w}" stroke="${O}" stroke-width="1.2" opacity=".5"/>`;
-    for (let k = -4; k <= 4; k++) s += `<path d="M${c + k * 14},138L${c + k * 60},${h}" stroke="${O}" stroke-width="1" opacity=".2"/>`;
-    [[36, 30, 0], [c, 40, 1], [w - 36, 30, 2]].forEach(([x, ancho, i]) => {
-      const r0 = ancho / 2, alto = ancho * 1.45, y = 134 - alto;
-      s += `<g class="hueco-marco" style="--i:${i}"><path d="M${x - r0},134V${f(y + r0)}A${r0},${r0} 0 0 1 ${x + r0},${f(y + r0)}V134Z" fill="${P}" stroke="${O}" stroke-width="1.5"/>` +
-        `<path d="M${x - r0 + 4},131V${f(y + r0 + 1)}A${r0 - 4},${r0 - 4} 0 0 1 ${x + r0 - 4},${f(y + r0 + 1)}V131Z" fill="${T}" opacity=".85"/>` +
-        `<path d="${A.destello(x, y + alto * 0.45, ancho * 0.16, 0.2)}" fill="${P}"/></g>`;
+    const w = 38, h = 150;
+    let s = `<rect x="1" y="1" width="${w - 2}" height="${h - 2}" fill="${PUERTA}" stroke="${O}" stroke-width="1.8"/>`;
+    [[9, 58], [76, 64]].forEach(([y, alto]) => {
+      s += `<rect x="6" y="${y}" width="${w - 12}" height="${alto}" rx="1.5" fill="${PUERTA_PANEL}" stroke="${PUERTA_LINEA}" stroke-width="1.3"/>`;
+      s += `<path d="M8.5,${y + 3}V${y + alto - 3}" stroke="rgba(255,255,255,.4)" stroke-width="1.2"/>`;
     });
-    [c - 42, c + 42].forEach((x) => {
-      s += `<path d="M${x},0V12" stroke="${O}" stroke-width="1.1"/><path d="M${x - 9},22Q${x - 8},12 ${x},12Q${x + 8},12 ${x + 9},22Z" fill="${C}" stroke="${O}" stroke-width="1.2"/><circle cx="${x}" cy="25" r="2.6" fill="#fff9e8"/>`;
-    });
+    s += `<circle cx="${w - 5.5}" cy="72" r="2.3" fill="${LATON}" stroke="${O}" stroke-width=".8"/>`;
     return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true" focusable="false">${s}</svg>`;
   }
 
-  /* Luz detrás de una ventana (se enciende y apaga al tocarla) */
-  function luzVentana(i) {
-    const id = `luz-v${i}`;
-    return `<svg viewBox="0 0 58 107" preserveAspectRatio="none" aria-hidden="true" focusable="false">` +
-      `<defs><radialGradient id="${id}" cx="50%" cy="62%" r="70%"><stop offset="0" stop-color="#fffbea"/><stop offset=".55" stop-color="${LUZ}"/><stop offset="1" stop-color="#f1cf7e"/></radialGradient></defs>` +
-      `<rect class="vl-encendida" width="58" height="107" fill="url(#${id})"/>` +
-      `<rect class="vl-apagada" width="58" height="107" fill="${O}"/>` +
-      `<path d="M4,78H54" stroke="${O}" stroke-width="2" opacity=".55"/>` +
-      `<path d="M13,78V66Q13,58 19,58Q25,58 25,66V78Z M31,78V70Q31,62 38,60Q45,62 45,70V78Z" fill="${T}" opacity=".7"/>` +
-      `<path class="vl-destello" d="${A.destello(29, 34, 6, 0.2)}" fill="${D}" opacity=".6"/></svg>`;
+  /* Lo que se ve por la puerta al abrirse: la luz del taller y un arco de talavera */
+  function huecoPuerta() {
+    const w = 76, h = 150, c = w / 2, ya = 124, r0 = 15;
+    let s = `<defs><radialGradient id="hueco-luz" cx="50%" cy="38%" r="80%"><stop offset="0" stop-color="#fffdf6"/><stop offset=".6" stop-color="${P}"/><stop offset="1" stop-color="#e2d3b3"/></radialGradient></defs>`;
+    s += `<rect width="${w}" height="${h}" fill="url(#hueco-luz)"/>`;
+    s += `<g transform="translate(${c - 15},12) scale(.3)">${A.logoPartes()}</g>`;
+    s += `<g class="hueco-marco"><path d="M${c - r0},${ya}V${ya - 34}A${r0},${r0} 0 0 1 ${c + r0},${ya - 34}V${ya}Z" fill="${P}" stroke="${O}" stroke-width="1.2"/>` +
+      `<path d="M${c},${ya - 34 - r0}A${r0},${r0} 0 0 1 ${c + r0},${ya - 34}V${ya}H${c + r0 - 3.5}V${ya - 34}A${r0 - 3.5},${r0 - 3.5} 0 0 0 ${c},${ya - 34 - r0 + 3.5}Z" fill="${T}"/></g>`;
+    s += `<path d="M0,${ya}H${w}V${h}H0Z" fill="#eadcbf"/><path d="M0,${ya}H${w}" stroke="${O}" stroke-width="1" opacity=".5"/>`;
+    for (let k = -3; k <= 3; k++) s += `<path d="M${c + k * 8},${ya}L${c + k * 30},${h}" stroke="${O}" stroke-width=".8" opacity=".2"/>`;
+    return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true" focusable="false">${s}</svg>`;
   }
 
-  /* Farol de papel colgante */
-  function farol() {
-    return `<svg viewBox="0 0 40 78" aria-hidden="true" focusable="false" overflow="visible">` +
-      `<path d="M20,0V16" stroke="${O}" stroke-width="1.5"/>` +
-      `<path d="M13,16H27L29,21H11Z" fill="${O}"/>` +
-      `<path d="M11,21C3,26 2,50 11,56H29C38,50 37,26 29,21Z" fill="${P}" stroke="${O}" stroke-width="2"/>` +
-      `<path d="M7,30H33M5,38H35M6,46H34" stroke="${C}" stroke-width="1.4" fill="none"/>` +
-      `<path d="${A.destello(20, 38, 6, 0.2)}" fill="${D}" stroke="${O}" stroke-width=".8"/>` +
-      `<path d="M11,56H29L27,61H13Z" fill="${O}"/>` +
-      `<path d="M20,61V72M17,72H23" stroke="${T}" stroke-width="1.6"/></svg>`;
+  /* Un postigo de persiana (la ventana tiene dos) */
+  function postigoPanel() {
+    let s = `<rect x="1" y="1" width="22" height="62" fill="#f7f3ea" stroke="${O}" stroke-width="1.4"/>`;
+    for (let y = 7; y < 60; y += 4.6) s += `<path d="M4.5,${f(y)}H19.5" stroke="#cdbfa8" stroke-width="1.5"/>`;
+    return `<svg viewBox="0 0 24 64" preserveAspectRatio="none" aria-hidden="true" focusable="false">${s}</svg>`;
   }
 
-  /* Maceta con plantita y una flor escondida que florece al tocarla */
-  function maceta(i) {
-    const r = A.azar(`maceta-${i}`);
-    const w = 56, h = 106, c = w / 2, base = h, alto = 36, yT = base - alto;
-    const cuerpo = `M${c - 16},${yT + 8}H${c + 16}L${c + 12},${base}H${c - 12}Z`;
-    let deco = i === 0
-      ? `<path d="M${c - 14},${yT + 17}H${c + 14}M${c - 13},${yT + 26}H${c + 13}" stroke="${T}" stroke-width="3"/>`
-      : [-8, 0, 8].map((dx) => `<circle cx="${c + dx}" cy="${yT + 21}" r="2.4" fill="${T}"/>`).join('');
-    let hojas = '';
-    [[-1, 0], [0, 1], [1, 2]].forEach(([dir, k]) => {
-      hojas += A.enredadera([[c + dir * 2, yT + 2], [c + dir * 7, yT - 18], [c + dir * 13 + (r() - 0.5) * 4, yT - 38]],
-        { semilla: 70 + i * 5 + k, retraso: 0, dur: 0.01, hoja: [8, 12], paso: 8, zarcillos: 0, flores: 0, grosor: 1.6, clase: 'fija' });
+  /* Celosía de talavera: estrellas azules con huecos que se iluminan */
+  function celosia(w, h, i) {
+    const m = 4.5, iw = w - 2 * m, ih = h - 2 * m;
+    const n = Math.max(2, Math.round(iw / 12)), cw = iw / n;
+    const filas = Math.max(2, Math.round(ih / cw)), ch = ih / filas;
+    const id = `celosia-${i}`;
+    let dentro = `<rect x="${m}" y="${m}" width="${f(iw)}" height="${f(ih)}" fill="${P}"/>`;
+    for (let j = 0; j <= filas; j++) {
+      for (let k = 0; k <= n; k++) dentro += `<circle class="cl-hueco" cx="${f(m + k * cw)}" cy="${f(m + j * ch)}" r="${f(Math.min(cw, ch) * 0.2)}" fill="${VIDRIO}"/>`;
+    }
+    for (let j = 0; j < filas; j++) {
+      for (let k = 0; k < n; k++) dentro += `<path d="${A.destello(m + (k + 0.5) * cw, m + (j + 0.5) * ch, Math.min(cw, ch) * 0.46, 0.2)}" fill="${T}"/>`;
+    }
+    return `<svg viewBox="0 0 ${w} ${h}" aria-hidden="true" focusable="false"><defs><clipPath id="${id}"><rect x="${m}" y="${m}" width="${f(iw)}" height="${f(ih)}"/></clipPath></defs>` +
+      `<rect x=".8" y=".8" width="${f(w - 1.6)}" height="${f(h - 1.6)}" fill="${MURO}" stroke="${O}" stroke-width="1.4"/>` +
+      `<g clip-path="url(#${id})">${dentro}</g><rect x="${m}" y="${m}" width="${f(iw)}" height="${f(ih)}" fill="none" stroke="${O}" stroke-width=".9"/></svg>`;
+  }
+
+  /* Arbolito redondo en maceta de talavera */
+  function topiario(i) {
+    const r = A.azar(`topiario-${i}`);
+    const w = 32, h = 82, c = 16, cy = 24;
+    let copa = `<path d="M${c},${cy + 10}V62" stroke="${C}" stroke-width="2.4" stroke-linecap="round"/>`;
+    copa += `<circle cx="${c}" cy="${cy}" r="13.5" fill="#4f9f3a"/>`;
+    for (let k = 0; k < 34; k++) {
+      const a = r() * 6.283, d = Math.sqrt(r()) * 13.5;
+      const x = c + Math.cos(a) * d, y = cy + Math.sin(a) * d;
+      copa += hojaFija(x, y, r() * 360, 0.5 + r() * 0.28, tono(r, 0.8 + (y - cy + 13) / 12));
+    }
+    let maceta = `<path d="M${c - 11},64H${c + 11}L${c + 8},${h - 1}H${c - 8}Z" fill="${P}" stroke="${O}" stroke-width="1.3"/>`;
+    maceta += `<path d="M${c - 12.5},59H${c + 12.5}V65H${c - 12.5}Z" fill="${T}" stroke="${O}" stroke-width="1.2"/>`;
+    maceta += `<path d="M${c - 9.8},71H${c + 9.8}M${c - 9.2},75.5H${c + 9.2}" stroke="${T}" stroke-width="1.4"/>`;
+    maceta += [c - 5, c, c + 5].map((x) => `<circle cx="${x}" cy="79.5" r="1.1" fill="${T}"/>`).join('');
+    return `<svg viewBox="0 0 ${w} ${h}" aria-hidden="true" focusable="false" overflow="visible"><g class="topiario-copa" style="transform-origin:${c}px 62px">${copa}</g>${maceta}</svg>`;
+  }
+
+  /* El árbol que asoma desde arriba a la derecha (sus hojas van cayendo) */
+  function arbol() {
+    const r = A.azar('arbol-inluna');
+    const w = 360, h = 330;
+    const ramas = [
+      { pts: [[378, 18], [330, 52], [276, 92], [222, 134], [176, 168]], g: 7 },
+      { pts: [[318, 60], [292, 36], [266, 20]], g: 3.2 },
+      { pts: [[276, 92], [298, 150], [322, 206]], g: 3.6 },
+      { pts: [[226, 132], [204, 190], [192, 238]], g: 2.8 },
+      { pts: [[182, 166], [150, 186], [126, 196]], g: 2.2 },
+    ];
+    let s = ramas.map((q) => `<path d="${curva(q.pts)}" stroke="${C}" stroke-width="${q.g}" fill="none" stroke-linecap="round"/>`).join('');
+    [[306, 44, 66, 64], [242, 88, 58, 52], [186, 146, 46, 36], [292, 152, 56, 46], [350, 112, 42, 30],
+      [230, 196, 40, 26], [320, 216, 36, 22], [134, 188, 28, 14], [268, 26, 42, 26], [196, 70, 34, 18]].forEach(([gx, gy, rad, n]) => {
+      for (let k = 0; k < n; k++) {
+        const a = r() * 6.283, d = Math.sqrt(r()) * rad;
+        const x = gx + Math.cos(a) * d, y = gy + Math.sin(a) * d * 0.78;
+        const oscuro = (y - gy) / rad + ((x - gx) / rad) * 0.4; // abajo y a la derecha, más sombra
+        s += hojaFija(x, y, r() * 360, 1.05 + r() * 0.7, tono(r, 1.4 + oscuro * 1.8));
+      }
     });
-    return `<svg viewBox="0 0 ${w} ${h}" aria-hidden="true" focusable="false" overflow="visible">` +
-      `<g class="mc-planta">${hojas}</g>` +
-      `<g class="mc-flor" style="transform-origin:${c}px ${yT - 40}px">` +
-      [0, 72, 144, 216, 288].map((a) => `<ellipse cx="${c}" cy="${yT - 47}" rx="4" ry="6.5" transform="rotate(${a} ${c} ${yT - 40})" fill="${P}" stroke="${O}" stroke-width="1.2"/>`).join('') +
-      `<circle cx="${c}" cy="${yT - 40}" r="3.4" fill="${D}"/></g>` +
-      `<path d="${cuerpo}" fill="${P}" stroke="${O}" stroke-width="2"/>${deco}` +
-      `<path d="M${c - 19},${yT}H${c + 19}V${yT + 8}H${c - 19}Z" fill="${T}" stroke="${O}" stroke-width="2"/></svg>`;
+    return `<svg viewBox="0 0 ${w} ${h}" aria-hidden="true" focusable="false" overflow="visible"><g class="arbol-copa" style="transform-origin:360px 20px">${s}</g></svg>`;
   }
 
-  /* La luna de Inluna (tu logo de media luna con patas) delante de las
-     seis hojas verdes, que hacen de círculo de fondo y giran despacio */
-  function luna() {
+  /* Una hoja suelta (las que caen del árbol) */
+  function hojaSuelta(color) {
+    return `<svg viewBox="-7 -7.5 14 17" aria-hidden="true" focusable="false"><path d="${HOJA}" fill="${color}"/><path d="${VENA}" stroke="rgba(255,255,255,.45)" stroke-width=".7"/></svg>`;
+  }
+
+  /* El emblema: las seis hojas de Inluna con su luna al frente */
+  function luna({ hojasClase = '' } = {}) {
     const c = 70, lado = 132, k = 0.34;
     const L = A.LUNA_CAJA, lw = L.w * k, lh = L.h * k;
     return `<svg viewBox="0 0 140 140" aria-hidden="true" focusable="false" overflow="visible">` +
       `<defs><radialGradient id="halo-luna"><stop offset="0" stop-color="#fff7da" stop-opacity=".95"/><stop offset=".5" stop-color="#fff7da" stop-opacity=".4"/><stop offset="1" stop-color="#fff7da" stop-opacity="0"/></radialGradient></defs>` +
       `<circle class="luna-halo" cx="${c}" cy="${c}" r="70" fill="url(#halo-luna)"/>` +
-      `<g class="luna-hojas"><g class="luna-hojas-toque"><g transform="translate(${c - lado / 2},${c - lado / 2}) scale(${lado / 100})">${A.logoPartes()}</g></g></g>` +
+      `<g class="luna-hojas ${hojasClase}"><g class="luna-hojas-toque"><g transform="translate(${c - lado / 2},${c - lado / 2}) scale(${lado / 100})">${A.logoPartes()}</g></g></g>` +
       `<g class="luna-frente"><g transform="translate(${f(c - lw / 2)},${f(c - lh / 2 + 2)}) scale(${k}) translate(${-L.x},${-L.y})">${A.lunaPartes({ contorno: O, grosor: 2.2 / k })}</g></g>` +
       `</svg>`;
-  }
-
-  /* Cielo: estrellas y puntitos repartidos (se ven en todo el fondo) */
-  function estrellas(ancho, alto) {
-    const r = A.azar(`cielo-${Math.round(ancho / 50)}`);
-    let s = '', chispas = '';
-    const n = Math.round(Math.min(30, 10 + ancho / 60));
-    for (let i = 0; i < n; i++) {
-      const x = 10 + r() * (ancho - 20), y = 10 + r() * (alto - 20);
-      if (r() < 0.45) s += `<circle cx="${f(x)}" cy="${f(y)}" r="${f(1.2 + r())}" fill="${O}"/>`;
-      else chispas += `<path class="chispa" style="--i:${i}" d="${A.destello(x, y, 3 + r() * 5, 0.18)}" fill="${r() < 0.5 ? D : 'none'}" stroke="${O}" stroke-width="1.2" stroke-linejoin="round"/>`;
-    }
-    return `<svg viewBox="0 0 ${f(ancho)} ${f(alto)}" preserveAspectRatio="none" aria-hidden="true" focusable="false">${s}${chispas}</svg>`;
-  }
-
-  function nube(k = 0) {
-    return k
-      ? `<svg viewBox="0 0 64 24" aria-hidden="true"><path d="M3,20q6,-10 16,-5q6,-10 16,-3q9,0 9,8" fill="none" stroke="${O}" stroke-width="1.8" stroke-linecap="round"/></svg>`
-      : `<svg viewBox="0 0 80 26" aria-hidden="true"><path d="M3,22q8,-13 21,-7q7,-13 22,-4q13,-2 13,11" fill="none" stroke="${O}" stroke-width="1.9" stroke-linecap="round"/></svg>`;
-  }
-
-  /* Arbustos del primer plano (el derecho es el mismo, en espejo) */
-  function arbusto() {
-    const r = A.azar('arbusto');
-    let s = `<path d="M0,110C0,74 18,56 42,58C52,32 90,26 106,48C122,36 150,46 152,72C160,82 160,98 160,110Z" fill="${FOLLAJE}" stroke="${O}" stroke-width="2.4" stroke-linejoin="round"/>`;
-    let hojas = '';
-    for (let k = 0; k < 22; k++) {
-      const x = 16 + r() * 128, y = 58 + r() * 46;
-      const ang = -90 + (x - 80) * 0.9 + (r() - 0.5) * 50;
-      hojas += `<path transform="translate(${f(x)},${f(y)}) rotate(${f(ang)})" d="${A.hojaD(10 + r() * 7)}" fill="${r() < 0.55 ? V : VC}" stroke="${O}" stroke-width="1.1"/>`;
-    }
-    [[52, 70], [100, 58], [128, 86]].forEach(([x, y]) => { hojas += `<path d="${A.destello(x, y, 5.5, 0.2)}" fill="${D}" stroke="${O}" stroke-width=".8"/>`; });
-    let trama = '';
-    for (let x = 118; x < 160; x += 6) trama += `M${x},110L${x + 10},72`;
-    return `<svg viewBox="0 0 160 110" preserveAspectRatio="xMinYMax meet" aria-hidden="true" focusable="false">${s}<path d="${trama}" stroke="${O}" stroke-width="1.3" opacity=".22"/>${hojas}</svg>`;
   }
 
   /* ================================================================
@@ -421,7 +365,7 @@
   }
 
   window.Escenas = {
-    FACHADA, caja, fachada, hojaPuerta, huecoPuerta, luzVentana, farol, maceta, luna, estrellas, nube, arbusto,
+    FACHADA, VERDES, caja, fachada, hojaPuerta, huecoPuerta, postigoPanel, celosia, topiario, arbol, hojaSuelta, luna,
     ventanaLuna, ventanaLunaSVG, hojasFondoSVG, lampara, pilar, enredaderaColgante, escapar,
   };
 })();

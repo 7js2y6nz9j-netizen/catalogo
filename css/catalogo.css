@@ -52,7 +52,7 @@ body { overflow-x: hidden; }
 .chispita.clara { background: #fff4cc; }
 
 /* ------------------------------------------------------------------
-   2. ENTRADA · la fachada simétrica
+   2. ENTRADA · la casita blanca con su enredadera (y el regreso)
    ------------------------------------------------------------------ */
 .entrada {
   position: fixed; inset: 0; z-index: 40; overflow: hidden; background: var(--papel);
@@ -62,98 +62,88 @@ body { overflow-x: hidden; }
 .escena {
   position: absolute; inset: 0;
   background-color: var(--papel);
-  background-image: radial-gradient(circle, rgba(58, 42, 31, 0.17) 1.05px, transparent 1.55px);
+  background-image: radial-gradient(circle, rgba(58, 42, 31, 0.12) 1.05px, transparent 1.55px);
   background-size: 24px 24px; background-position: 12px 12px;
 }
-.cielo-fondo { position: absolute; left: 0; right: 0; top: 0; height: 62%; pointer-events: none; opacity: 0; transition: opacity 0.8s ease 0.2s; }
-.cielo-fondo svg { width: 100%; height: 100%; }
-.entrada.lista .cielo-fondo { opacity: 1; }
-.chispa { transform-box: fill-box; transform-origin: center; animation: titilar 2.6s ease-in-out calc(var(--i, 0) * -0.55s) infinite; }
 @keyframes titilar { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.3; transform: scale(0.6); } }
-.nube { position: absolute; pointer-events: none; opacity: 0; transition: opacity 1s ease 0.5s; }
-.entrada.lista .nube { opacity: 0.85; }
-.nube svg { width: 100%; animation: nube 11s ease-in-out infinite alternate; }
-.nube-1 { top: 17%; left: 7%; width: 76px; }
-.nube-2 { top: 29%; right: 8%; width: 60px; }
-.nube-2 svg { animation-duration: 9s; animation-direction: alternate-reverse; }
-@keyframes nube { to { transform: translateX(26px); } }
-.fugaz {
-  position: absolute; top: var(--y, 12vh); left: -22vw; width: 96px; height: 2px; pointer-events: none; opacity: 0;
-  background: linear-gradient(90deg, transparent, var(--oscura)); border-radius: 2px; transform: rotate(16deg);
-}
-.fugaz::after {
-  content: ''; position: absolute; right: -7px; top: -6px; width: 14px; height: 14px; background: var(--dorado);
-  -webkit-mask: var(--destello) center / contain no-repeat; mask: var(--destello) center / contain no-repeat;
-}
-.fugaz.vuela { animation: fugaz 1s cubic-bezier(0.3, 0, 0.6, 1) forwards; }
-@keyframes fugaz {
-  0% { opacity: 0; transform: translate(0, 0) rotate(16deg); }
-  12% { opacity: 1; }
-  100% { opacity: 0; transform: translate(135vw, 38vw) rotate(16deg); }
-}
 
-.entrada-columna { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; }
+/* el árbol asoma arriba a la derecha y se mece con la brisa */
+.arbol {
+  position: absolute; top: calc(-3vh + var(--seguro-arriba)); right: -9vw; z-index: 3;
+  width: min(88vw, 560px); padding: 0; border: 0; background: none; cursor: pointer;
+  opacity: 0; transition: opacity 0.9s ease 0.1s;
+}
+.entrada.lista .arbol { opacity: 1; }
+.arbol svg { width: 100%; height: auto; overflow: visible; }
+.arbol .arbol-copa { transform-box: view-box; animation: brisa 5.5s ease-in-out infinite alternate; }
+.arbol.sacude .arbol-copa { animation: sacudir-arbol 0.9s ease; }
+.arbol:focus-visible { outline: 3px solid var(--acento); outline-offset: -8px; border-radius: 40px; }
+@media (max-width: 600px) { .arbol { width: 124vw; right: -30vw; top: calc(1vh + var(--seguro-arriba)); } }
+@keyframes brisa { from { transform: rotate(-0.6deg); } to { transform: rotate(0.8deg); } }
+@keyframes sacudir-arbol { 15% { transform: rotate(2.4deg); } 35% { transform: rotate(-1.8deg); } 55% { transform: rotate(1.1deg); } 75% { transform: rotate(-0.5deg); } }
+
+/* título arriba a la izquierda (como en tu referencia) */
 .entrada-titulo {
-  position: relative; z-index: 4; text-align: center; flex: none;
-  padding: calc(clamp(20px, 5vh, 56px) + var(--seguro-arriba)) 20px 0;
-  opacity: 0; transition: opacity 0.7s ease 0.15s;
+  position: absolute; left: 0; top: 0; z-index: 4; max-width: min(64vw, 460px); text-align: left;
+  padding: calc(clamp(18px, 4.5vh, 48px) + var(--seguro-arriba)) 16px 0 clamp(18px, 6vw, 56px);
+  opacity: 0; transition: opacity 0.7s ease 0.15s; pointer-events: none;
 }
 .entrada.lista .entrada-titulo { opacity: 1; }
-.entrada-antes { margin: 0 0 2px; font-family: var(--f-mano); font-size: 16px; letter-spacing: 0.06em; color: var(--acento); }
+.entrada-antes { margin: 0 0 2px 3px; font-family: var(--f-mano); font-size: 16px; letter-spacing: 0.06em; color: var(--acento); }
 .entrada-nombre {
   margin: 0; font-family: var(--f-titulo); font-style: italic; font-weight: 500;
-  font-size: clamp(44px, min(14vw, 9vh), 88px); line-height: 0.95; letter-spacing: -0.015em;
+  font-size: clamp(44px, min(13vw, 9vh), 84px); line-height: 0.95; letter-spacing: -0.015em;
 }
-.cielo { position: relative; z-index: 3; flex: 1 1 0; min-height: 64px; width: 100%; display: grid; place-items: center; }
-.luna {
-  width: clamp(64px, min(30vw, 17vh), 150px); aspect-ratio: 1; padding: 0; border: 0; background: none; cursor: pointer;
-  opacity: 0; transform: scale(0.7); transition: opacity 0.7s ease 0.25s, transform 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.3) 0.25s;
+.entrada-pista2 { margin: 10px 0 0 3px; max-width: 15em; font-family: var(--f-mano); font-size: 13px; color: var(--oscura); opacity: 0; transition: opacity 0.6s ease 1.8s; }
+.entrada.viva .entrada-pista2 { opacity: 0.75; }
+.nota-regreso {
+  display: block; width: fit-content; max-width: 22em; margin: 12px 0 0; padding: 9px 14px; border-radius: 16px;
+  background: rgba(251, 248, 241, 0.95); border: 1.5px solid var(--oscura); box-shadow: 0 3px 0 var(--oscura);
+  font-family: var(--f-mano); font-size: 14px; line-height: 1.45; color: var(--oscura);
+  animation: nota-entra 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; transition: opacity 0.6s ease, transform 0.6s ease;
 }
-.entrada.lista .luna { opacity: 1; transform: none; }
-.luna svg { width: 100%; height: 100%; overflow: visible; animation: luna-flota 3.6s ease-in-out infinite alternate; }
-.luna .luna-halo { transform-box: fill-box; transform-origin: center; opacity: 0.55; }
-/* las hojas de Inluna giran despacio detrás de la luna; al tocarla dan un giro */
-.luna .luna-hojas, .luna .luna-hojas-toque { transform-box: view-box; transform-origin: 50% 50%; }
-.luna .luna-hojas { animation: hojas-giran 48s linear infinite; }
-.luna .luna-frente { transform-box: fill-box; transform-origin: 50% 60%; }
-.luna.brilla svg { animation: luna-brilla 0.9s ease; }
-.luna.brilla .luna-hojas-toque { animation: hojas-toque 1s cubic-bezier(0.2, 0.8, 0.3, 1); }
-.luna.brilla .luna-frente { animation: luna-frente 0.9s ease; }
-.luna.brilla .luna-halo { animation: luna-halo 0.9s ease; }
-@keyframes hojas-giran { to { transform: rotate(360deg); } }
-@keyframes hojas-toque { from { transform: rotate(0deg); } to { transform: rotate(120deg); } }
-@keyframes luna-frente { 35% { transform: scale(1.12); filter: drop-shadow(0 0 6px #fff3c8); } }
-.luna:focus-visible { outline: 3px solid var(--acento); outline-offset: 4px; border-radius: 50%; }
-@keyframes luna-flota { to { transform: translateY(-6px); } }
-@keyframes luna-brilla { 35% { transform: scale(1.14) rotate(-5deg); } }
-@keyframes luna-halo { 35% { opacity: 1; transform: scale(1.25); } }
+.nota-regreso span { color: var(--acento); }
+.nota-regreso.se-va { opacity: 0; transform: translateY(-6px); }
+@keyframes nota-entra { from { opacity: 0; transform: translateY(10px) scale(0.96); } }
 
+/* la casa, abajo al centro */
+.casa-lugar {
+  position: absolute; left: 0; right: 0; z-index: 2; display: flex; justify-content: center; pointer-events: none;
+  bottom: calc(clamp(44px, 7vh, 70px) + var(--seguro-abajo));
+}
 .casa {
-  position: relative; z-index: 2; flex: none;
-  width: min(118vw, 780px, calc((100vh - 300px) * 1.2308));
-  width: min(118vw, 780px, calc((100svh - 300px) * 1.2308));
-  aspect-ratio: 640 / 520;
+  position: relative; flex: none; pointer-events: auto;
+  width: min(104vw, 560px, calc((100vh - 170px) * 0.8));
+  width: min(104vw, 560px, calc((100svh - 170px) * 0.8));
+  aspect-ratio: 400 / 500;
 }
 .casa > .fachada-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
 .fachada-casa { z-index: 2; opacity: 0; transition: opacity 0.7s ease; }
-.fachada-viva { z-index: 5; }
+.fachada-viva { z-index: 5; transition: opacity 0.35s ease; }
 .entrada.lista .fachada-casa { opacity: 1; }
-.fz-letrero { font-family: var(--f-titulo); font-style: italic; font-weight: 500; font-size: 25px; }
+.fz-letrero { font-family: var(--f-titulo); font-style: italic; font-weight: 500; font-size: 23px; }
 .fz-logo { opacity: 0; }
 .fz-logo.visible { opacity: 1; }
 
-/* enredaderas que crecen */
+/* la enredadera brota desde el techo y sus tiras se mecen */
+.fachada-viva .hv { transform-box: fill-box; transform-origin: 50% 12%; scale: 0; }
+.entrada.viva .fachada-viva .hv { animation: hv-brota 0.5s cubic-bezier(0.3, 1.6, 0.5, 1) var(--d, 0s) forwards; }
+.entrada.crecida .fachada-viva .hv { scale: 1; animation: none; }
+@keyframes hv-brota { to { scale: 1; } }
+.fachada-viva .tira { transform-box: view-box; animation: tira-mece var(--m, 4s) ease-in-out infinite alternate; }
+@keyframes tira-mece { from { transform: rotate(-1.6deg); } to { transform: rotate(1.6deg); } }
 .fachada-viva .tallo, .t-enredaderas .tallo { stroke-dasharray: 1 1; stroke-dashoffset: 1; }
-.fachada-viva .hoja, .t-enredaderas .hoja { transform-box: fill-box; transform-origin: 0% 50%; transform: scale(0); }
-.fachada-viva .hoja.flor, .t-enredaderas .hoja.flor { transform-origin: 50% 50%; }
 .entrada.viva .fachada-viva .tallo,
 .taller .t-enredaderas .tallo { animation: trazar calc(var(--dur, 1.8s) * 0.7) linear calc(var(--d, 0s) * 0.7) forwards; }
-.entrada.viva .fachada-viva .hoja,
+.entrada.crecida .fachada-viva .tallo { stroke-dashoffset: 0; animation: none; }
+/* (las enredaderas colgantes del interior) */
+.t-enredaderas .hoja { transform-box: fill-box; transform-origin: 0% 50%; transform: scale(0); }
+.t-enredaderas .hoja.flor { transform-origin: 50% 50%; }
 .taller .t-enredaderas .hoja { animation: brotar 0.4s cubic-bezier(0.3, 1.6, 0.5, 1) calc(var(--d, 0s) * 0.7) forwards; }
 @keyframes brotar { to { transform: scale(1); } }
 
 /* puertas: se abren según --abre (0 a 1) */
-.puertas { position: absolute; z-index: 1; perspective: 700px; perspective-origin: 50% 40%; opacity: 0; transition: opacity 0.7s ease; }
+.puertas { position: absolute; z-index: 1; perspective: 520px; perspective-origin: 50% 40%; opacity: 0; transition: opacity 0.7s ease; }
 .entrada.lista .puertas { opacity: 1; }
 .puertas::after {
   content: ''; position: absolute; left: -45%; right: -45%; top: 15%; bottom: -35%; pointer-events: none; z-index: 3;
@@ -162,8 +152,8 @@ body { overflow-x: hidden; }
 }
 .hueco { position: absolute; inset: 0; overflow: hidden; background: var(--papel); }
 .hueco svg { width: 100%; height: 100%; }
-.hueco-marco { animation: flotar-hueco 1.8s ease-in-out calc(var(--i, 0) * -0.6s) infinite alternate; }
-@keyframes flotar-hueco { to { transform: translateY(-5px); } }
+.hueco-marco { animation: flotar-hueco 1.8s ease-in-out infinite alternate; }
+@keyframes flotar-hueco { to { transform: translateY(-4px); } }
 .puertas-boton {
   position: absolute; inset: 0; padding: 0; margin: 0; border: 0; background: none;
   cursor: grab; transform-style: preserve-3d; touch-action: none;
@@ -194,70 +184,77 @@ body { overflow-x: hidden; }
   .entrada:not(.abriendo):not(.arrastrando) .puertas-boton:hover .hoja-puerta.der { transform: rotateY(-16deg); }
 }
 
-/* ventanas, faroles y macetas que se pueden tocar */
-.ventana-luz, .farol, .maceta { position: absolute; padding: 0; margin: 0; border: 0; background: none; cursor: pointer; }
-.ventana-luz { z-index: 1; opacity: 0; transition: opacity 0.7s ease; }
-.entrada.lista .ventana-luz { opacity: 1; }
-.ventana-luz svg { width: 100%; height: 100%; }
-.ventana-luz .vl-apagada { opacity: 0; transition: opacity 0.3s ease; }
-.ventana-luz.apagada .vl-apagada { opacity: 0.9; }
-.ventana-luz .vl-destello { transform-box: fill-box; transform-origin: center; animation: titilar 2.2s ease-in-out infinite; }
-.farol { z-index: 3; transform-origin: 50% 0; animation: farol-quieto 2.4s ease-in-out infinite alternate; opacity: 0; transition: opacity 0.7s ease; }
-.entrada.lista .farol { opacity: 1; }
-.farol svg { position: relative; width: 100%; height: 100%; overflow: visible; transform-origin: 50% 0; }
-.farol.mece svg { animation: farol-mece 1.4s cubic-bezier(0.3, 0, 0.3, 1); }
-.farol-luz {
-  position: absolute; left: 50%; top: 50%; width: 190%; aspect-ratio: 1; border-radius: 50%; pointer-events: none;
-  transform: translate(-50%, -45%); background: radial-gradient(closest-side, rgba(255, 234, 166, 0.7), rgba(255, 234, 166, 0));
-  animation: farol-luz 1.8s ease-in-out infinite alternate;
+/* postigos, celosías, arbolitos y el emblema: todo se puede tocar */
+.postigo, .celosia, .maceta, .emblema {
+  position: absolute; z-index: 3; padding: 0; margin: 0; border: 0; background: none; cursor: pointer;
+  opacity: 0; transition: opacity 0.7s ease;
 }
-.farol.mece .farol-luz { animation: farol-destella 1.4s ease; }
+.entrada.lista .postigo, .entrada.lista .celosia, .entrada.lista .maceta, .entrada.lista .emblema { opacity: 1; }
+.postigo:focus-visible, .celosia:focus-visible, .maceta:focus-visible, .emblema:focus-visible { outline: 3px solid var(--acento); outline-offset: 3px; border-radius: 8px; }
+.postigo { perspective: 240px; }
+.postigo-hoja { position: absolute; top: 0; bottom: 0; width: 50%; transition: transform 0.75s cubic-bezier(0.3, 1.2, 0.4, 1); }
+.postigo-hoja svg { width: 100%; height: 100%; }
+.postigo-hoja.izq { left: 0; transform-origin: 0 50%; transform: rotateY(-156deg); }
+.postigo-hoja.der { right: 0; transform-origin: 100% 50%; transform: rotateY(156deg); }
+.postigo.cerrada .postigo-hoja { transform: rotateY(0deg); }
+.celosia svg { width: 100%; height: 100%; transition: filter 0.4s ease; }
+.celosia .cl-hueco { transition: fill 0.35s ease; }
+.celosia.encendida .cl-hueco { fill: #ffd46b; }
+.celosia.encendida svg { filter: drop-shadow(0 0 6px rgba(255, 212, 107, 0.8)); }
+.maceta svg { width: 100%; height: 100%; overflow: visible; }
+.maceta .topiario-copa { transform-box: view-box; animation: topiario-brisa 3.2s ease-in-out infinite alternate; }
+.maceta.sacude .topiario-copa { animation: sacudir-topiario 0.8s ease; }
+@keyframes topiario-brisa { from { transform: rotate(-1.5deg); } to { transform: rotate(1.5deg); } }
+@keyframes sacudir-topiario { 20% { transform: rotate(9deg); } 45% { transform: rotate(-7deg); } 70% { transform: rotate(3deg); } 100% { transform: rotate(0deg); } }
+.emblema svg { width: 100%; height: 100%; overflow: visible; }
+.luna .luna-halo { transform-box: fill-box; transform-origin: center; opacity: 0.4; }
+/* las hojas de Inluna giran despacio detrás de la luna; al tocarla dan un giro */
+.luna .luna-hojas, .luna .luna-hojas-toque { transform-box: view-box; transform-origin: 50% 50%; }
+.luna .luna-hojas { animation: hojas-giran 48s linear infinite; }
+.luna .luna-frente { transform-box: fill-box; transform-origin: 50% 60%; }
+.luna.brilla svg { animation: luna-brilla 0.9s ease; }
+.luna.brilla .luna-hojas-toque { animation: hojas-toque 1s cubic-bezier(0.2, 0.8, 0.3, 1); }
+.luna.brilla .luna-frente { animation: luna-frente 0.9s ease; }
+.luna.brilla .luna-halo { animation: luna-halo 0.9s ease; }
+@keyframes hojas-giran { to { transform: rotate(360deg); } }
+@keyframes hojas-toque { from { transform: rotate(0deg); } to { transform: rotate(120deg); } }
+@keyframes luna-frente { 35% { transform: scale(1.12); filter: drop-shadow(0 0 6px #fff3c8); } }
+@keyframes luna-brilla { 35% { transform: scale(1.12) rotate(-4deg); } }
+@keyframes luna-halo { 35% { opacity: 1; transform: scale(1.25); } }
+/* (el farol del interior usa estas) */
 @keyframes farol-quieto { from { transform: rotate(-2deg); } to { transform: rotate(2deg); } }
 @keyframes farol-mece { 12% { transform: rotate(22deg); } 32% { transform: rotate(-15deg); } 52% { transform: rotate(9deg); } 74% { transform: rotate(-4deg); } 100% { transform: rotate(0); } }
 @keyframes farol-luz { from { opacity: 0.65; } to { opacity: 1; } }
-@keyframes farol-destella { 20% { opacity: 1; transform: translate(-50%, -45%) scale(1.3); } }
-.maceta { z-index: 3; opacity: 0; transition: opacity 0.7s ease; }
-.entrada.lista .maceta { opacity: 1; }
-.maceta svg { width: 100%; height: 100%; overflow: visible; }
-.maceta .mc-planta { transform-box: fill-box; transform-origin: 50% 100%; animation: planta 2.6s ease-in-out infinite alternate; }
-.maceta .mc-flor { transform: scale(0); transition: transform 0.45s cubic-bezier(0.3, 1.7, 0.5, 1); }
-.maceta.florece .mc-flor { transform: scale(1); }
-.maceta.gira .mc-flor { animation: flor-gira 0.7s ease; }
-@keyframes planta { from { transform: rotate(-2.5deg); } to { transform: rotate(2.5deg); } }
-@keyframes flor-gira { 50% { transform: scale(1.3) rotate(72deg); } 100% { transform: scale(1) rotate(144deg); } }
-.ventana-luz:focus-visible, .farol:focus-visible, .maceta:focus-visible { outline: 3px solid var(--acento); outline-offset: 3px; border-radius: 10px; }
 
+/* pista de las puertas */
 .entrada-pistas {
-  position: relative; z-index: 4; flex: none; text-align: center;
-  padding: clamp(6px, 1.5vh, 14px) 16px calc(clamp(14px, 3vh, 34px) + var(--seguro-abajo));
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 7; text-align: center; pointer-events: none;
+  padding: 0 16px calc(clamp(12px, 2.6vh, 28px) + var(--seguro-abajo));
 }
 .entrada-pista {
   display: inline-flex; align-items: center; gap: 8px; margin: 0;
   font-family: var(--f-mano); font-size: 16px; color: var(--acento);
   opacity: 0; transition: opacity 0.5s ease 0.5s;
 }
-.entrada-pista2 { margin: 8px 0 0; font-family: var(--f-mano); font-size: 13px; color: var(--oscura); opacity: 0; transition: opacity 0.6s ease 1.8s; }
 .entrada.viva .entrada-pista { opacity: 1; }
-.entrada.viva .entrada-pista2 { opacity: 0.75; }
 .entrada.abriendo .entrada-pista, .entrada.abriendo .entrada-pista2 { opacity: 0; transition-delay: 0s; transition-duration: 0.25s; }
 .pista-icono { width: 22px; height: 22px; animation: senalar-lados 1.2s ease-in-out infinite; }
 @keyframes senalar-lados { 50% { transform: scaleX(1.3); } }
 .entrada.abriendo .fachada-viva { opacity: 0; transition: opacity 0.35s ease 0.25s; }
 
-.frente { position: absolute; left: 0; right: 0; bottom: 0; height: 0; z-index: 6; pointer-events: none; }
-.arbusto { position: absolute; bottom: -10px; width: clamp(76px, 20vw, 200px); opacity: 0; transition: opacity 0.8s ease 0.4s; }
-.entrada.lista .arbusto { opacity: 1; }
-.arbusto svg { width: 100%; }
-.arbusto.izq { left: -14px; }
-.arbusto.der { right: -14px; transform: scaleX(-1); }
-.chispas-vivas { position: absolute; inset: 0; z-index: 7; pointer-events: none; }
-.chispa-viva {
-  position: absolute; left: -5px; top: -5px; width: 9px; height: 9px; background: var(--dorado);
-  -webkit-mask: var(--destello) center / contain no-repeat; mask: var(--destello) center / contain no-repeat;
-  animation: chispa-viva 1.8s ease-in-out infinite alternate;
+/* hojas que caen del árbol (y las que sueltas al tocar) */
+.hojas-caen { position: absolute; inset: 0; z-index: 6; pointer-events: none; overflow: hidden; transition: opacity 0.3s ease; }
+.entrada.abriendo .hojas-caen { opacity: 0; }
+.hoja-cae { position: absolute; width: var(--tam, 14px); opacity: 0; animation: caer var(--dur, 10s) linear var(--retraso, 0s) infinite; }
+.hoja-cae.rafaga { animation-iteration-count: 1; animation-fill-mode: both; }
+.hoja-cae svg { width: 100%; height: auto; overflow: visible; animation: vaiven var(--vaiven, 2s) ease-in-out infinite alternate; }
+@keyframes caer {
+  0% { opacity: 0; transform: translate(0, 0) rotate(0deg); }
+  8% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx, -16vw), 100vh) rotate(var(--giro, 300deg)); }
 }
-.chispa-viva.grande { width: 13px; height: 13px; left: -7px; top: -7px; }
-@keyframes chispa-viva { from { opacity: 0.2; scale: 0.55; } to { opacity: 0.9; scale: 1.05; } }
+@keyframes vaiven { from { transform: translateX(-9px) rotate(-16deg); } to { transform: translateX(9px) rotate(16deg); } }
 
 /* ------------------------------------------------------------------
    3. TALLER · galería de arcos (pantalla completa, sin scroll)
@@ -265,6 +262,18 @@ body { overflow-x: hidden; }
 .taller { position: fixed; inset: 0; overflow: hidden; background: var(--papel); }
 .taller > * { transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s ease, filter 0.4s ease; }
 .taller.atras .t-contenido { transform: scale(0.94); opacity: 0.5; }
+/* salir del taller (arriba a la izquierda): vuelves a la fachada por la puerta */
+.t-salir {
+  position: fixed; top: calc(10px + var(--seguro-arriba)); left: 12px; z-index: 8;
+  display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 5px 13px 5px 10px;
+  border: 1.5px solid var(--oscura); border-radius: 999px; background: rgba(251, 248, 241, 0.9);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  font-family: var(--f-mano); font-size: 12.5px; color: var(--oscura); text-decoration: none;
+  box-shadow: 0 2px 0 var(--oscura); animation: aparecer 0.5s ease 0.4s both;
+}
+.t-salir .icono { width: 18px; height: 18px; }
+.t-salir:active { transform: translateY(2px); box-shadow: none; }
+.t-salir:focus-visible { outline: 3px solid var(--acento); outline-offset: 3px; }
 .t-pared { position: absolute; inset: 0; }
 .t-friso {
   position: absolute; left: 0; right: 0; top: 0; z-index: 5; height: 54px;
@@ -589,5 +598,5 @@ body { overflow-x: hidden; }
 
 @media (prefers-reduced-motion: reduce) {
   .tarjeta-flota, .tarjeta-sombra, .nicho-marco, .nicho-sombra, .farol, .t-lampara, .chispa, .hueco-marco,
-  .chispa-viva, .luna svg, .luna-hojas, .hojas-fondo, .contacto-hojas, .nube svg, .contacto-olas, [class*='anim-'] img, .anim-capa, .anim-capa * { animation: none !important; }
+  .luna svg, .luna-hojas, .hojas-fondo, .contacto-hojas, .hoja-cae, .arbol-copa, .tira, .topiario-copa, .contacto-olas, [class*='anim-'] img, .anim-capa, .anim-capa * { animation: none !important; }
 }
